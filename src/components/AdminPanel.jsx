@@ -1,13 +1,18 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTimes, FaCheck, FaSpinner } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaCheck, FaSpinner, FaUpload, FaLink } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadMode, setUploadMode] = useState('url'); // 'url' o 'upload'
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,14 +26,97 @@ export default function AdminPanel() {
     settings: ''
   });
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+      alert('Por favor, selecciona una imagen válida');
+      return;
+    }
+
+    // Validar tamaño (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen es demasiado grande. Máximo 5MB');
+      return;
+    }
+
+    setSelectedFile(file);
+    
+    // Crear preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (file) => {
+    try {
+      // Generar nombre único para el archivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // Subir a Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('album-photos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      // Obtener URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('album-photos')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error subiendo imagen:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
+      let imageUrl = formData.image;
+
+      // Si el modo es 'upload', subir la imagen primero
+      if (uploadMode === 'upload') {
+        if (!selectedFile) {
+          alert('Por favor, selecciona una imagen');
+          setLoading(false);
+          return;
+        }
+
+        setUploadProgress(50);
+        imageUrl = await uploadImage(selectedFile);
+        setUploadProgress(100);
+      }
+
+      // Validar que haya URL de imagen
+      if (!imageUrl) {
+        alert('Por favor, proporciona una imagen (URL o archivo)');
+        setLoading(false);
+        return;
+      }
+
+      // Guardar en la base de datos
+      const photoData = {
+        ...formData,
+        image: imageUrl
+      };
+
       const { data, error } = await supabase
         .from('photos')
-        .insert([formData])
+        .insert([photoData])
         .select();
 
       if (error) throw error;
@@ -40,6 +128,7 @@ export default function AdminPanel() {
         setShowSuccess(false);
         setIsOpen(false);
         setLoading(false);
+        setUploadProgress(0);
       }, 2000);
       
       // Resetear formulario
@@ -55,11 +144,14 @@ export default function AdminPanel() {
         lens: '',
         settings: ''
       });
+      setSelectedFile(null);
+      setPreviewUrl('');
       
     } catch (error) {
       console.error('Error guardando foto:', error);
       alert('Error al guardar la foto: ' + error.message);
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -118,6 +210,123 @@ export default function AdminPanel() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Selector de modo de imagen */}
+              <div>
+                <label className="block text-sm font-semibold text-[var(--color-accent)] mb-3">
+                  Método de Imagen *
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMode('url')}
+                    disabled={loading}
+                    className={`cursor-pointer p-4 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
+                      uploadMode === 'url'
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+                        : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
+                    } disabled:opacity-50`}
+                  >
+                    <FaLink />
+                    <span className="font-semibold">URL de Imagen</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setUploadMode('upload')}
+                    disabled={loading}
+                    className={`cursor-pointer p-4 rounded-lg border-2 transition-all flex items-center justify-center gap-2 ${
+                      uploadMode === 'upload'
+                        ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]'
+                        : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600'
+                    } disabled:opacity-50`}
+                  >
+                    <FaUpload />
+                    <span className="font-semibold">Subir Archivo</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Campo de imagen según el modo */}
+              {uploadMode === 'url' ? (
+                <div>
+                  <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
+                    URL de la Imagen *
+                  </label>
+                  <input
+                    type="url"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleChange}
+                    required
+                    disabled={loading}
+                    placeholder="https://i.imgur.com/ejemplo.jpg"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
+                    Subir Imagen *
+                  </label>
+                  
+                  {/* Preview de imagen */}
+                  {previewUrl && (
+                    <div className="mb-4 relative aspect-video rounded-lg overflow-hidden bg-gray-800">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFile(null);
+                          setPreviewUrl('');
+                        }}
+                        className="cursor-pointer absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center"
+                      >
+                        <FaTimes size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  <label className="cursor-pointer block">
+                    <div className="border-2 border-dashed border-gray-600 hover:border-[var(--color-accent)] rounded-lg p-8 text-center transition-all">
+                      <FaUpload className="text-4xl text-gray-500 mx-auto mb-3" />
+                      <p className="text-gray-400 mb-1">
+                        {selectedFile ? selectedFile.name : 'Haz clic para seleccionar una imagen'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        PNG, JPG, WEBP (máximo 5MB)
+                      </p>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      disabled={loading}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {/* Barra de progreso */}
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="mt-4">
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-[var(--color-accent)] h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-400 mt-2 text-center">
+                        Subiendo... {uploadProgress}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Resto de campos del formulario */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
@@ -149,22 +358,6 @@ export default function AdminPanel() {
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
-                  URL de la Imagen *
-                </label>
-                <input
-                  type="url"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                  placeholder="https://i.imgur.com/ejemplo.jpg"
-                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
-                />
               </div>
 
               <div>
@@ -285,7 +478,7 @@ export default function AdminPanel() {
                   {loading ? (
                     <>
                       <FaSpinner className="animate-spin" />
-                      Guardando...
+                      {uploadProgress > 0 ? 'Subiendo...' : 'Guardando...'}
                     </>
                   ) : showSuccess ? (
                     <>
