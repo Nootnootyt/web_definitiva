@@ -5,9 +5,26 @@ import { motion } from 'framer-motion';
 export default function CustomCursor() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const requestRef = useRef();
 
+  // Detectar si es dispositivo táctil
   useEffect(() => {
+    const checkTouchDevice = () => {
+      return (
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        window.matchMedia('(pointer: coarse)').matches
+      );
+    };
+    
+    setIsTouchDevice(checkTouchDevice());
+  }, []);
+
+  useEffect(() => {
+    // No ejecutar en dispositivos táctiles
+    if (isTouchDevice) return;
+
     let currentX = 0;
     let currentY = 0;
     let targetX = 0;
@@ -19,14 +36,11 @@ export default function CustomCursor() {
     };
 
     const handleMouseOver = (e) => {
-      // Buscar el elemento interactivo más cercano
       const interactiveElement = e.target.closest('a, button, input, textarea, select, [role="button"]');
-      
       setIsHovering(!!interactiveElement);
     };
 
     const animate = () => {
-      // Smooth lerp (interpolación lineal) para suavizar el movimiento
       const lerp = 0.15;
       currentX += (targetX - currentX) * lerp;
       currentY += (targetY - currentY) * lerp;
@@ -46,13 +60,15 @@ export default function CustomCursor() {
         cancelAnimationFrame(requestRef.current);
       }
     };
-  }, []);
+  }, [isTouchDevice]);
+
+  // No renderizar en dispositivos táctiles
+  if (isTouchDevice) return null;
 
   return (
     <>
-      {/* Círculo grande exterior */}
       <motion.div
-        className="cursor-dot"
+        className="cursor-dot hidden md:block"
         animate={{
           x: mousePosition.x - 16,
           y: mousePosition.y - 16,
@@ -78,9 +94,8 @@ export default function CustomCursor() {
         }}
       />
       
-      {/* Punto interior */}
       <motion.div
-        className="cursor-outline"
+        className="cursor-outline hidden md:block"
         style={{
           x: mousePosition.x - 4,
           y: mousePosition.y - 4,
