@@ -8,6 +8,7 @@ import PhotoModal from '@/components/PhotoModal';
 import EditPhotoModal from '@/components/EditPhotoModal';
 import CustomCursor from '@/components/CustomCursor';
 import Link from 'next/link';
+import AdminPanel from '@/components/AdminPanel';  // ✅ Añade este import al principio
 
 export default function AlbumPage() {
   const [ref, inView] = useInView({
@@ -264,6 +265,10 @@ export default function AlbumPage() {
         onClose={closeModal}
         onUpdate={loadPhotos}
       />
+
+      
+      <AdminPanel />
+
     </>
   );
 }

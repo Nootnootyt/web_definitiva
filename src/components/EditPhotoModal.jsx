@@ -102,25 +102,39 @@ export default function EditPhotoModal({ photo, isOpen, onClose, onUpdate }) {
           <div className="overflow-y-auto px-8 pb-8 flex-1">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Toggle Portfolio */}
-              <div className="p-4 bg-gray-800 rounded-lg">
+                <div className="p-4 bg-gray-800 rounded-lg">
                 <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                     <FaStar className="text-[var(--color-accent)]" size={20} />
                     <div>
-                      <p className="font-semibold text-white">Mostrar en Portfolio</p>
-                      <p className="text-sm text-gray-400">Esta foto aparecerá en la página principal</p>
+                        <p className="font-semibold text-white">Mostrar en Portfolio</p>
+                        <p className="text-sm text-gray-400">Esta foto aparecerá en la página principal</p>
                     </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    name="in_portfolio"
-                    checked={formData.in_portfolio}
-                    onChange={handleChange}
-                    disabled={loading}
-                    className="w-6 h-6 rounded bg-gray-700 border-gray-600 text-[var(--color-accent)] focus:ring-[var(--color-accent)]"
-                  />
+                    </div>
+                    
+                    {/* Toggle Switch */}
+                    <div className="relative">
+                    <input
+                        type="checkbox"
+                        name="in_portfolio"
+                        checked={formData.in_portfolio}
+                        onChange={handleChange}
+                        disabled={loading}
+                        className="sr-only peer"
+                    />
+                    <div className="w-14 h-7 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--color-accent)]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[var(--color-accent)]"></div>
+                    </div>
                 </label>
-              </div>
+  
+                {/* Indicador visual del estado */}
+                {formData.in_portfolio && (
+                    <div className="mt-2 text-xs text-[var(--color-accent)] font-semibold flex items-center gap-1">
+                    <FaStar size={10} />
+                    Visible en portfolio
+                    </div>
+                )}
+                </div>
+
 
               {/* Campos del formulario */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
