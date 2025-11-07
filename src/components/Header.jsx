@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { FaBars, FaTimes, FaSignInAlt, FaSignOutAlt, FaUser } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import LoginModal from './LoginModal';
+import Link from 'next/link';
+
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -56,13 +58,12 @@ export default function Header() {
     };
   }, [mobileMenuOpen]);
 
-  const navItems = ['Inicio', 'Portfolio', 'Álbum', 'Videos', 'Contacto'];
+  const navItems = ['Inicio', 'Portfolio', 'Videos', 'Contacto'];
 
   const scrollToSection = (item) => {
     const sectionMap = {
       'Inicio': 'hero',
       'Portfolio': 'portfolio',
-      'Álbum': 'album',
       'Videos': 'videos',
       'Contacto': 'contacto'
     };
@@ -125,6 +126,20 @@ export default function Header() {
                     </button>
                   </motion.li>
                 ))}
+
+                {/* Enlace al álbum separado */}
+                <motion.li
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <Link href="/album">
+                    <button className="cursor-pointer text-white hover:text-[var(--color-accent)] transition-colors duration-300 font-semibold text-sm uppercase tracking-wider">
+                      Álbum
+                    </button>
+                  </Link>
+                </motion.li>
+
               </ul>
 
               {/* Botón Login/Logout Desktop */}
