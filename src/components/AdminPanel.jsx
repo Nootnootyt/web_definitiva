@@ -221,7 +221,7 @@ export default function AdminPanel() {
         title={user ? "Añadir foto" : "Iniciar sesión para añadir fotos"}
       >
         <FaPlus size={24} />
-      </motion.button>
+      </motion.button> 
 
 
 
