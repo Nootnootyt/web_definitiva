@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import PhotoModal from './PhotoModal';
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaSpinner } from 'react-icons/fa';
+import { supabase } from '@/lib/supabase';
 
 export default function AlbumFotos() {
   const [ref, inView] = useInView({
@@ -14,34 +15,59 @@ export default function AlbumFotos() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [albumPhotos, setAlbumPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Cargar fotos del álbum desde localStorage
+  // Cargar fotos desde Supabase
   useEffect(() => {
-    const loadAlbumPhotos = () => {
-      try {
-        const stored = localStorage.getItem('albumPhotos');
-        if (stored) {
-          const photos = JSON.parse(stored);
-          setAlbumPhotos(photos);
-        }
-      } catch (error) {
-        console.error('Error cargando álbum:', error);
-      }
-    };
+    loadPhotos();
 
-    loadAlbumPhotos();
+    // Suscribirse a cambios en tiempo real
+    const subscription = supabase
+      .channel('photos_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'photos' }, () => {
+        loadPhotos();
+      })
+      .subscribe();
 
-    // Escuchar cambios en localStorage (cuando se añade una foto nueva)
-    const handleStorageChange = () => {
-      loadAlbumPhotos();
-    };
-
-    window.addEventListener('albumUpdated', handleStorageChange);
-    
     return () => {
-      window.removeEventListener('albumUpdated', handleStorageChange);
+      subscription.unsubscribe();
     };
   }, []);
+
+  const loadPhotos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAlbumPhotos(data || []);
+    } catch (error) {
+      console.error('Error cargando fotos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deletePhoto = async (photoId) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta foto?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('photos')
+        .delete()
+        .eq('id', photoId);
+
+      if (error) throw error;
+      
+      // Actualizar lista local
+      setAlbumPhotos(albumPhotos.filter(photo => photo.id !== photoId));
+    } catch (error) {
+      console.error('Error eliminando foto:', error);
+      alert('Error al eliminar la foto');
+    }
+  };
 
   const openModal = (photo) => {
     setSelectedPhoto(photo);
@@ -51,14 +77,6 @@ export default function AlbumFotos() {
   const closeModal = () => {
     setIsModalOpen(false);
     setTimeout(() => setSelectedPhoto(null), 300);
-  };
-
-  const deletePhoto = (photoId) => {
-    if (confirm('¿Estás seguro de que quieres eliminar esta foto?')) {
-      const updatedPhotos = albumPhotos.filter(photo => photo.id !== photoId);
-      localStorage.setItem('albumPhotos', JSON.stringify(updatedPhotos));
-      setAlbumPhotos(updatedPhotos);
-    }
   };
 
   const containerVariants = {
@@ -84,7 +102,17 @@ export default function AlbumFotos() {
     }
   };
 
-  // Si no hay fotos en el álbum, no mostrar la sección
+  if (loading) {
+    return (
+      <section className="py-32 px-6 bg-gradient-to-b from-black to-gray-900">
+        <div className="container mx-auto text-center">
+          <FaSpinner className="animate-spin text-[var(--color-accent)] text-6xl mx-auto" />
+          <p className="text-gray-400 mt-4">Cargando álbum...</p>
+        </div>
+      </section>
+    );
+  }
+
   if (albumPhotos.length === 0) {
     return null;
   }
@@ -118,7 +146,6 @@ export default function AlbumFotos() {
                 variants={itemVariants}
                 className="relative group overflow-hidden rounded-2xl aspect-square"
               >
-                {/* Botón de eliminar */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -129,7 +156,6 @@ export default function AlbumFotos() {
                   <FaTrash size={16} />
                 </button>
 
-                {/* Imagen con click para abrir modal */}
                 <motion.div
                   whileHover={{ y: -10, scale: 1.05 }}
                   onClick={() => openModal(photo)}

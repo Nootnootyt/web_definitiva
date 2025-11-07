@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTimes, FaCheck } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaCheck, FaSpinner } from 'react-icons/fa';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -19,37 +21,25 @@ export default function AdminPanel() {
     settings: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    const newId = Date.now();
-    
-    const newPhoto = {
-      id: newId,
-      ...formData
-    };
-
     try {
-      // Obtener fotos existentes del localStorage
-      const existingPhotos = localStorage.getItem('albumPhotos');
-      const photosArray = existingPhotos ? JSON.parse(existingPhotos) : [];
+      const { data, error } = await supabase
+        .from('photos')
+        .insert([formData])
+        .select();
+
+      if (error) throw error;
+
+      console.log('Foto añadida:', data);
       
-      // Añadir la nueva foto al inicio del array
-      photosArray.unshift(newPhoto);
-      
-      // Guardar en localStorage
-      localStorage.setItem('albumPhotos', JSON.stringify(photosArray));
-      
-      // Disparar evento para que el componente AlbumFotos se actualice
-      window.dispatchEvent(new Event('albumUpdated'));
-      
-      console.log('Foto añadida al álbum:', newPhoto);
-      
-      // Mostrar mensaje de éxito
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
         setIsOpen(false);
+        setLoading(false);
       }, 2000);
       
       // Resetear formulario
@@ -68,7 +58,8 @@ export default function AdminPanel() {
       
     } catch (error) {
       console.error('Error guardando foto:', error);
-      alert('Error al guardar la foto. Por favor, inténtalo de nuevo.');
+      alert('Error al guardar la foto: ' + error.message);
+      setLoading(false);
     }
   };
 
@@ -81,7 +72,6 @@ export default function AdminPanel() {
 
   return (
     <>
-      {/* Botón flotante */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -92,7 +82,6 @@ export default function AdminPanel() {
         <FaPlus size={24} />
       </motion.button>
 
-      {/* Panel modal */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -104,20 +93,19 @@ export default function AdminPanel() {
             animate={{ scale: 1, y: 0 }}
             className="bg-gray-900 rounded-3xl p-8 max-w-3xl w-full my-8"
           >
-            {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-4xl font-black text-white">
                 <span style={{ color: 'var(--color-accent)' }}>Añadir</span> al Álbum
               </h2>
               <button
                 onClick={() => setIsOpen(false)}
-                className="cursor-pointer w-10 h-10 rounded-full bg-gray-800 hover:bg-red-500 text-white transition-colors flex items-center justify-center"
+                disabled={loading}
+                className="cursor-pointer w-10 h-10 rounded-full bg-gray-800 hover:bg-red-500 text-white transition-colors flex items-center justify-center disabled:opacity-50"
               >
                 <FaTimes />
               </button>
             </div>
 
-            {/* Mensaje de éxito */}
             {showSuccess && (
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -129,9 +117,7 @@ export default function AdminPanel() {
               </motion.div>
             )}
 
-            {/* Formulario */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Fila 1: Título y Categoría */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
@@ -143,7 +129,8 @@ export default function AdminPanel() {
                     value={formData.title}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
 
@@ -157,13 +144,13 @@ export default function AdminPanel() {
                     value={formData.category}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                     placeholder="Ej: Retratos, Paisaje, Eventos"
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
               </div>
 
-              {/* URL de Imagen */}
               <div>
                 <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
                   URL de la Imagen *
@@ -174,15 +161,12 @@ export default function AdminPanel() {
                   value={formData.image}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   placeholder="https://i.imgur.com/ejemplo.jpg"
-                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Sube tu imagen a Imgur y pega aquí la URL directa
-                </p>
               </div>
 
-              {/* Descripción */}
               <div>
                 <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
                   Descripción *
@@ -192,12 +176,12 @@ export default function AdminPanel() {
                   value={formData.description}
                   onChange={handleChange}
                   required
+                  disabled={loading}
                   rows="3"
-                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                 />
               </div>
 
-              {/* Resto de campos (Autor, Fecha, etc.) */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
@@ -208,7 +192,8 @@ export default function AdminPanel() {
                     name="author"
                     value={formData.author}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
 
@@ -221,7 +206,8 @@ export default function AdminPanel() {
                     name="date"
                     value={formData.date}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -236,8 +222,9 @@ export default function AdminPanel() {
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
+                    disabled={loading}
                     placeholder="Ej: Sevilla, España"
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
 
@@ -250,8 +237,9 @@ export default function AdminPanel() {
                     name="camera"
                     value={formData.camera}
                     onChange={handleChange}
+                    disabled={loading}
                     placeholder="Ej: Canon EOS R6"
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
               </div>
@@ -266,8 +254,9 @@ export default function AdminPanel() {
                     name="lens"
                     value={formData.lens}
                     onChange={handleChange}
+                    disabled={loading}
                     placeholder="Ej: RF 85mm f/1.2"
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
 
@@ -280,25 +269,38 @@ export default function AdminPanel() {
                     name="settings"
                     value={formData.settings}
                     onChange={handleChange}
+                    disabled={loading}
                     placeholder="Ej: f/1.8, 1/200s, ISO 100"
-                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   />
                 </div>
               </div>
 
-              {/* Botones */}
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  disabled={showSuccess}
-                  className="cursor-pointer flex-1 px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading || showSuccess}
+                  className="cursor-pointer flex-1 px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
-                  {showSuccess ? 'Guardado ✓' : 'Añadir al Álbum'}
+                  {loading ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      Guardando...
+                    </>
+                  ) : showSuccess ? (
+                    <>
+                      <FaCheck />
+                      Guardado
+                    </>
+                  ) : (
+                    'Añadir al Álbum'
+                  )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="cursor-pointer px-8 py-4 bg-gray-800 text-white font-bold text-lg rounded-full hover:bg-gray-700 transition-all duration-300"
+                  disabled={loading}
+                  className="cursor-pointer px-8 py-4 bg-gray-800 text-white font-bold text-lg rounded-full hover:bg-gray-700 transition-all duration-300 disabled:opacity-50"
                 >
                   Cancelar
                 </button>
