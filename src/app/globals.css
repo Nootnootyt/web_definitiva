@@ -49,31 +49,43 @@ html {
   background: #a0df00;
 }
 
+/* ===== CURSOR PERSONALIZADO ===== */
 
-/* Zonas donde el cursor debe ser normal */
-input,
-textarea,
-select,
-button,
-a,
-[role="dialog"],
-.admin-panel-modal,
-.photo-modal,
-.admin-panel-modal *,
-.photo-modal * {
-  cursor: auto !important;
+/* Ocultar cursor por defecto en toda la página */
+* {
+  cursor: none !important;
 }
 
-/* Elementos interactivos con cursor pointer */
+/* Mostrar cursor normal solo en inputs/textareas cuando están en foco */
+input:focus,
+textarea:focus,
+select:focus {
+  cursor: text !important;
+}
+
+/* Elementos interactivos mantienen cursor: none pero con clase especial */
 button,
 a,
 [role="button"],
 .cursor-pointer {
-  cursor: pointer !important;
+  cursor: none !important;
 }
 
-/* Elementos de texto con cursor text */
+/* Asegurar que los modales no oculten el cursor personalizado */
+.photo-modal,
+.admin-panel-modal,
+.cursor-dot,
+.cursor-outline {
+  pointer-events: none;
+}
+
+/* Permitir interacción en contenido de modales */
+.photo-modal > div,
+.admin-panel-modal > div,
+button,
 input,
-textarea {
-  cursor: text !important;
+textarea,
+select,
+a {
+  pointer-events: auto;
 }

@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 export default function CustomCursor() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
     const mouseMove = (e) => {
@@ -13,26 +12,14 @@ export default function CustomCursor() {
     };
 
     const handleMouseOver = (e) => {
-      // Ocultar cursor si está sobre modales o formularios
-      const isOverModal = e.target.closest('[role="dialog"]') || 
-                          e.target.closest('.admin-panel-modal') ||
-                          e.target.closest('.photo-modal');
-      
-      setIsHidden(!!isOverModal);
-
       // Detectar hover sobre elementos interactivos
-      if (e.target.tagName === 'A' || 
-          e.target.tagName === 'BUTTON' || 
-          e.target.tagName === 'INPUT' ||
-          e.target.tagName === 'TEXTAREA' ||
-          e.target.closest('a') || 
-          e.target.closest('button') ||
-          e.target.closest('input') ||
-          e.target.closest('textarea')) {
-        setIsHovering(true);
-      } else {
-        setIsHovering(false);
-      }
+      const isInteractive = e.target.tagName === 'A' || 
+                           e.target.tagName === 'BUTTON' || 
+                           e.target.closest('a') || 
+                           e.target.closest('button') ||
+                           e.target.classList.contains('cursor-pointer');
+      
+      setIsHovering(isInteractive);
     };
 
     window.addEventListener('mousemove', mouseMove);
@@ -44,33 +31,21 @@ export default function CustomCursor() {
     };
   }, []);
 
-  // No renderizar si está oculto
-  if (isHidden) return null;
-
-  const variants = {
-    default: {
-      x: mousePosition.x - 16,
-      y: mousePosition.y - 16,
-      scale: 1,
-    },
-    hover: {
-      x: mousePosition.x - 32,
-      y: mousePosition.y - 32,
-      scale: 2,
-    }
-  };
-
   return (
     <>
+      {/* Círculo grande exterior */}
       <motion.div
         className="cursor-dot"
-        variants={variants}
-        animate={isHovering ? "hover" : "default"}
+        animate={{
+          x: mousePosition.x - 16,
+          y: mousePosition.y - 16,
+          scale: isHovering ? 2 : 1,
+        }}
         transition={{
           type: "spring",
-          stiffness: 500,
-          damping: 28,
-          mass: 0.5
+          stiffness: 300,
+          damping: 20,
+          mass: 0.3
         }}
         style={{
           width: '32px',
@@ -79,10 +54,12 @@ export default function CustomCursor() {
           border: '2px solid var(--color-accent)',
           position: 'fixed',
           pointerEvents: 'none',
-          zIndex: 9998, // Justo debajo de los modales
+          zIndex: 99999,
           mixBlendMode: 'difference',
         }}
       />
+      
+      {/* Punto interior */}
       <motion.div
         className="cursor-outline"
         animate={{
@@ -91,8 +68,8 @@ export default function CustomCursor() {
         }}
         transition={{
           type: "spring",
-          stiffness: 150,
-          damping: 15,
+          stiffness: 600,
+          damping: 30,
           mass: 0.1
         }}
         style={{
@@ -102,7 +79,7 @@ export default function CustomCursor() {
           backgroundColor: 'var(--color-accent)',
           position: 'fixed',
           pointerEvents: 'none',
-          zIndex: 9998, // Justo debajo de los modales
+          zIndex: 99999,
         }}
       />
     </>

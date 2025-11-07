@@ -58,14 +58,13 @@ export default function AdminPanel() {
 
   return (
     <>
-      {/* Botón flotante */}
+      {/* Botón flotante para abrir panel */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full bg-[var(--color-accent)] text-black shadow-2xl hover:shadow-[var(--color-accent)]/50 flex items-center justify-center transition-all duration-300"
-        style={{ cursor: 'pointer' }}
+        className="cursor-pointer fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full bg-[var(--color-accent)] text-black shadow-2xl hover:shadow-[var(--color-accent)]/50 flex items-center justify-center transition-all duration-300"
       >
         <FaPlus size={24} />
       </motion.button>
@@ -75,24 +74,21 @@ export default function AdminPanel() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="admin-panel-modal fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4 overflow-y-auto"
-          style={{ cursor: 'default' }}
+          className="admin-panel-modal fixed inset-0 z-[9998] bg-black/90 flex items-center justify-center p-4 overflow-y-auto"
         >
           <motion.div
             initial={{ scale: 0.9, y: 50 }}
             animate={{ scale: 1, y: 0 }}
             className="bg-gray-900 rounded-3xl p-8 max-w-3xl w-full my-8"
-            style={{ cursor: 'default' }}
           >
-            {/* Header */}
+            {/* Header del modal */}
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-4xl font-black text-white">
                 <span style={{ color: 'var(--color-accent)' }}>Añadir</span> Foto
               </h2>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-10 h-10 rounded-full bg-gray-800 hover:bg-red-500 text-white transition-colors flex items-center justify-center"
-                style={{ cursor: 'pointer' }}
+                className="cursor-pointer w-10 h-10 rounded-full bg-gray-800 hover:bg-red-500 text-white transition-colors flex items-center justify-center"
               >
                 <FaTimes />
               </button>
@@ -113,7 +109,6 @@ export default function AdminPanel() {
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
 
@@ -129,7 +124,6 @@ export default function AdminPanel() {
                     required
                     placeholder="Ej: Retratos, Paisaje, Eventos"
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
               </div>
@@ -147,7 +141,6 @@ export default function AdminPanel() {
                   required
                   placeholder="https://i.imgur.com/ejemplo.jpg"
                   className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  style={{ cursor: 'text' }}
                 />
               </div>
 
@@ -163,7 +156,6 @@ export default function AdminPanel() {
                   required
                   rows="3"
                   className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  style={{ cursor: 'text' }}
                 />
               </div>
 
@@ -179,7 +171,6 @@ export default function AdminPanel() {
                     value={formData.author}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
 
@@ -193,7 +184,6 @@ export default function AdminPanel() {
                     value={formData.date}
                     onChange={handleChange}
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'pointer' }}
                   />
                 </div>
               </div>
@@ -211,7 +201,6 @@ export default function AdminPanel() {
                     onChange={handleChange}
                     placeholder="Ej: Sevilla, España"
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
 
@@ -226,7 +215,6 @@ export default function AdminPanel() {
                     onChange={handleChange}
                     placeholder="Ej: Canon EOS R6"
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
               </div>
@@ -244,7 +232,6 @@ export default function AdminPanel() {
                     onChange={handleChange}
                     placeholder="Ej: RF 85mm f/1.2"
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
 
@@ -259,7 +246,6 @@ export default function AdminPanel() {
                     onChange={handleChange}
                     placeholder="Ej: f/1.8, 1/200s, ISO 100"
                     className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    style={{ cursor: 'text' }}
                   />
                 </div>
               </div>
@@ -268,16 +254,14 @@ export default function AdminPanel() {
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300"
-                  style={{ cursor: 'pointer' }}
+                  className="cursor-pointer flex-1 px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300"
                 >
                   Generar Código JSON
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-8 py-4 bg-gray-800 text-white font-bold text-lg rounded-full hover:bg-gray-700 transition-all duration-300"
-                  style={{ cursor: 'pointer' }}
+                  className="cursor-pointer px-8 py-4 bg-gray-800 text-white font-bold text-lg rounded-full hover:bg-gray-700 transition-all duration-300"
                 >
                   Cancelar
                 </button>

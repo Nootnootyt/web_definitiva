@@ -11,9 +11,8 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/95"
+        className="photo-modal fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/95"
         onClick={onClose}
-        style={{ cursor: 'default' }}  // ← AÑADIR ESTA LÍNEA
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -22,17 +21,17 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
           transition={{ type: "spring", duration: 0.5 }}
           className="relative max-w-7xl w-full bg-gray-900 rounded-3xl overflow-hidden shadow-2xl"
           onClick={(e) => e.stopPropagation()}
-          style={{ cursor: 'default' }}  // ← AÑADIR ESTA LÍNEA
         >
+          {/* Botón cerrar */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-black/50 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-300 flex items-center justify-center"
-            style={{ cursor: 'pointer' }}  // ← AÑADIR ESTA LÍNEA
+            className="cursor-pointer absolute top-4 right-4 z-10 w-12 h-12 rounded-full bg-black/50 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-300 flex items-center justify-center"
           >
             <FaTimes size={20} />
           </button>
 
           <div className="grid md:grid-cols-2 gap-8 p-8">
+            {/* Imagen */}
             <div className="relative aspect-square rounded-2xl overflow-hidden">
               <img
                 src={photo.image}
@@ -41,6 +40,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
               />
             </div>
 
+            {/* Información */}
             <div className="flex flex-col justify-center space-y-6">
               <div>
                 <span className="text-xs uppercase tracking-widest text-[var(--color-accent)] font-semibold">
@@ -54,6 +54,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
                 </p>
               </div>
 
+              {/* Metadatos */}
               <div className="space-y-3 pt-6 border-t border-gray-700">
                 <div className="flex items-center gap-3 text-gray-400">
                   <FaUser className="text-[var(--color-accent)]" />
@@ -82,6 +83,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
                 )}
               </div>
 
+              {/* Configuración de cámara */}
               {photo.settings && (
                 <div className="pt-4 border-t border-gray-700">
                   <h3 className="text-sm uppercase tracking-wider text-[var(--color-accent)] font-semibold mb-2">
