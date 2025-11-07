@@ -1,11 +1,15 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSignInAlt, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { supabase } from '@/lib/supabase';
+import LoginModal from './LoginModal';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,6 +19,30 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Verificar sesión
+  useEffect(() => {
+    checkUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setMobileMenuOpen(false);
+  };
 
   // Bloquear scroll cuando el menú móvil está abierto
   useEffect(() => {
@@ -61,7 +89,7 @@ export default function Header() {
       >
         <nav className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            {/* Logo - Responsive */}
+            {/* Logo */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -75,52 +103,100 @@ export default function Header() {
             </motion.div>
 
             {/* Desktop Navigation */}
-            <motion.ul
+            <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="hidden lg:flex items-center gap-8"
             >
-              {navItems.map((item, index) => (
-                <motion.li
-                  key={item}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                >
-                  <button
-                    onClick={() => scrollToSection(item)}
-                    className="cursor-pointer text-white hover:text-[var(--color-accent)] transition-colors duration-300 font-semibold text-sm uppercase tracking-wider"
+              <ul className="flex items-center gap-8">
+                {navItems.map((item, index) => (
+                  <motion.li
+                    key={item}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
                   >
-                    {item}
-                  </button>
-                </motion.li>
-              ))}
-            </motion.ul>
+                    <button
+                      onClick={() => scrollToSection(item)}
+                      className="cursor-pointer text-white hover:text-[var(--color-accent)] transition-colors duration-300 font-semibold text-sm uppercase tracking-wider"
+                    >
+                      {item}
+                    </button>
+                  </motion.li>
+                ))}
+              </ul>
 
-            {/* Tablet Navigation (md screens) */}
-            <motion.ul
+              {/* Botón Login/Logout Desktop */}
+              {user ? (
+                <motion.button
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  onClick={handleLogout}
+                  className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-all duration-300"
+                >
+                  <FaSignOutAlt />
+                  Cerrar Sesión
+                </motion.button>
+              ) : (
+                <motion.button
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.05 }}
+                  onClick={() => setShowLoginModal(true)}
+                  className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-accent)] hover:bg-white text-black font-semibold text-sm transition-all duration-300"
+                >
+                  <FaSignInAlt />
+                  Iniciar Sesión
+                </motion.button>
+              )}
+            </motion.div>
+
+            {/* Tablet Navigation */}
+            <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="hidden md:flex lg:hidden items-center gap-4"
             >
-              {navItems.map((item, index) => (
-                <motion.li
-                  key={item}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                >
-                  <button
-                    onClick={() => scrollToSection(item)}
-                    className="cursor-pointer text-white hover:text-[var(--color-accent)] transition-colors duration-300 font-semibold text-xs uppercase tracking-wider"
+              <ul className="flex items-center gap-4">
+                {navItems.map((item, index) => (
+                  <motion.li
+                    key={item}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
                   >
-                    {item}
-                  </button>
-                </motion.li>
-              ))}
-            </motion.ul>
+                    <button
+                      onClick={() => scrollToSection(item)}
+                      className="cursor-pointer text-white hover:text-[var(--color-accent)] transition-colors duration-300 font-semibold text-xs uppercase tracking-wider"
+                    >
+                      {item}
+                    </button>
+                  </motion.li>
+                ))}
+              </ul>
+
+              {/* Botón Login/Logout Tablet */}
+              {user ? (
+                <button
+                  onClick={handleLogout}
+                  className="cursor-pointer w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                  title="Cerrar sesión"
+                >
+                  <FaSignOutAlt size={16} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="cursor-pointer w-10 h-10 rounded-full bg-[var(--color-accent)] hover:bg-white text-black flex items-center justify-center transition-all"
+                  title="Iniciar sesión"
+                >
+                  <FaSignInAlt size={16} />
+                </button>
+              )}
+            </motion.div>
 
             {/* Mobile Menu Button */}
             <motion.button
@@ -186,6 +262,41 @@ export default function Header() {
                     </motion.li>
                   ))}
                 </ul>
+
+                {/* Botón Login/Logout Mobile */}
+                <div className="mt-6">
+                  {user ? (
+                    <button
+                      onClick={handleLogout}
+                      className="cursor-pointer w-full px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-300 font-bold text-lg flex items-center justify-center gap-3"
+                    >
+                      <FaSignOutAlt />
+                      Cerrar Sesión
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowLoginModal(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="cursor-pointer w-full px-6 py-4 bg-[var(--color-accent)] hover:bg-white text-black rounded-lg transition-all duration-300 font-bold text-lg flex items-center justify-center gap-3"
+                    >
+                      <FaSignInAlt />
+                      Iniciar Sesión
+                    </button>
+                  )}
+                </div>
+
+                {/* Indicador de sesión */}
+                {user && (
+                  <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-[var(--color-accent)]">
+                      <FaUser />
+                      <span className="text-sm">Sesión iniciada</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">{user.email}</p>
+                  </div>
+                )}
               </nav>
 
               {/* Mobile Menu Footer */}
@@ -198,6 +309,16 @@ export default function Header() {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Modal de login */}
+      <LoginModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={(user) => {
+          setUser(user);
+          setShowLoginModal(false);
+        }}
+      />
     </>
   );
 }

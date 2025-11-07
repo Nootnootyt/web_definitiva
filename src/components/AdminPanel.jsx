@@ -218,24 +218,15 @@ export default function AdminPanel() {
         whileHover={{ scale: 1.1 }}
         onClick={handleButtonClick}
         className="cursor-pointer fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full bg-[var(--color-accent)] text-black shadow-2xl hover:shadow-[var(--color-accent)]/50 flex items-center justify-center transition-all duration-300"
-        title={user ? "Añadir foto" : "Iniciar sesión"}
+        title={user ? "Añadir foto" : "Iniciar sesión para añadir fotos"}
       >
-        {user ? <FaPlus size={24} /> : <FaLock size={24} />}
+        <FaPlus size={24} />
       </motion.button>
 
-      {/* Botón de logout (solo visible si está logueado) */}
-      {user && (
-        <motion.button
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          whileHover={{ scale: 1.1 }}
-          onClick={handleLogout}
-          className="cursor-pointer fixed bottom-28 right-8 z-50 w-16 h-16 rounded-full bg-red-500 text-white shadow-2xl hover:shadow-red-500/50 flex items-center justify-center transition-all duration-300"
-          title="Cerrar sesión"
-        >
-          <FaSignOutAlt size={20} />
-        </motion.button>
-      )}
+
+
+
+      
 
       {/* Modal de login */}
       <LoginModal 
