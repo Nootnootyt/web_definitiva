@@ -2,6 +2,7 @@
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import PortfolioFotos from '@/components/PortfolioFotos';
+import AlbumFotos from '@/components/AlbumFotos';
 import VideosYoutube from '@/components/VideosYoutube';
 import Footer from '@/components/Footer';
 import CustomCursor from '@/components/CustomCursor';
@@ -15,6 +16,7 @@ export default function Home() {
       <main>
         <Hero />
         <PortfolioFotos />
+        <AlbumFotos />
         <VideosYoutube />
       </main>
       <Footer />

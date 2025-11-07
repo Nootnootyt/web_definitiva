@@ -13,7 +13,8 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navItems = ['Inicio', 'Portfolio', 'Videos', 'Contacto'];
+  const navItems = ['Inicio', 'Portfolio', 'Álbum', 'Videos', 'Contacto'];
+
 
   return (
     <motion.header

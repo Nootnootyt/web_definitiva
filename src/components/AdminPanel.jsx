@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaCheck } from 'react-icons/fa';
 
 export default function AdminPanel() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -28,25 +29,47 @@ export default function AdminPanel() {
       ...formData
     };
 
-    console.log('Nueva foto añadida:', newPhoto);
-    
-    const photoCode = JSON.stringify(newPhoto, null, 2);
-    alert(`Copia este código y añádelo manualmente a public/data/photos.json:\n\n${photoCode}`);
-    
-    setFormData({
-      title: '',
-      description: '',
-      category: '',
-      image: '',
-      author: 'Javier Jiménez',
-      date: new Date().toISOString().split('T')[0],
-      location: '',
-      camera: '',
-      lens: '',
-      settings: ''
-    });
-    
-    setIsOpen(false);
+    try {
+      // Obtener fotos existentes del localStorage
+      const existingPhotos = localStorage.getItem('albumPhotos');
+      const photosArray = existingPhotos ? JSON.parse(existingPhotos) : [];
+      
+      // Añadir la nueva foto al inicio del array
+      photosArray.unshift(newPhoto);
+      
+      // Guardar en localStorage
+      localStorage.setItem('albumPhotos', JSON.stringify(photosArray));
+      
+      // Disparar evento para que el componente AlbumFotos se actualice
+      window.dispatchEvent(new Event('albumUpdated'));
+      
+      console.log('Foto añadida al álbum:', newPhoto);
+      
+      // Mostrar mensaje de éxito
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setIsOpen(false);
+      }, 2000);
+      
+      // Resetear formulario
+      setFormData({
+        title: '',
+        description: '',
+        category: '',
+        image: '',
+        author: 'Javier Jiménez',
+        date: new Date().toISOString().split('T')[0],
+        location: '',
+        camera: '',
+        lens: '',
+        settings: ''
+      });
+      
+    } catch (error) {
+      console.error('Error guardando foto:', error);
+      alert('Error al guardar la foto. Por favor, inténtalo de nuevo.');
+    }
   };
 
   const handleChange = (e) => {
@@ -58,7 +81,7 @@ export default function AdminPanel() {
 
   return (
     <>
-      {/* Botón flotante para abrir panel */}
+      {/* Botón flotante */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -81,10 +104,10 @@ export default function AdminPanel() {
             animate={{ scale: 1, y: 0 }}
             className="bg-gray-900 rounded-3xl p-8 max-w-3xl w-full my-8"
           >
-            {/* Header del modal */}
+            {/* Header */}
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-4xl font-black text-white">
-                <span style={{ color: 'var(--color-accent)' }}>Añadir</span> Foto
+                <span style={{ color: 'var(--color-accent)' }}>Añadir</span> al Álbum
               </h2>
               <button
                 onClick={() => setIsOpen(false)}
@@ -93,6 +116,18 @@ export default function AdminPanel() {
                 <FaTimes />
               </button>
             </div>
+
+            {/* Mensaje de éxito */}
+            {showSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-green-500 text-white rounded-lg flex items-center gap-3"
+              >
+                <FaCheck />
+                <span className="font-semibold">¡Foto añadida al álbum exitosamente!</span>
+              </motion.div>
+            )}
 
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -142,6 +177,9 @@ export default function AdminPanel() {
                   placeholder="https://i.imgur.com/ejemplo.jpg"
                   className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Sube tu imagen a Imgur y pega aquí la URL directa
+                </p>
               </div>
 
               {/* Descripción */}
@@ -159,7 +197,7 @@ export default function AdminPanel() {
                 />
               </div>
 
-              {/* Fila 2: Autor y Fecha */}
+              {/* Resto de campos (Autor, Fecha, etc.) */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
@@ -188,7 +226,6 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              {/* Fila 3: Ubicación y Cámara */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
@@ -219,7 +256,6 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              {/* Fila 4: Lente y Configuración */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-[var(--color-accent)] mb-2">
@@ -250,13 +286,14 @@ export default function AdminPanel() {
                 </div>
               </div>
 
-              {/* Botones de acción */}
+              {/* Botones */}
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  className="cursor-pointer flex-1 px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300"
+                  disabled={showSuccess}
+                  className="cursor-pointer flex-1 px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Generar Código JSON
+                  {showSuccess ? 'Guardado ✓' : 'Añadir al Álbum'}
                 </button>
                 <button
                   type="button"
