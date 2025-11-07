@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaPlus, FaTimes, FaCheck, FaSpinner, FaUpload, FaLink } from 'react-icons/fa';
+import { FaPlus, FaTimes, FaCheck, FaSpinner, FaUpload, FaLink, FaSignOutAlt, FaLock } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
+import LoginModal from './LoginModal';
 
 export default function AdminPanel() {
+  const [user, setUser] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -25,6 +28,38 @@ export default function AdminPanel() {
     lens: '',
     settings: ''
   });
+
+  // Verificar sesión al cargar
+  useEffect(() => {
+    checkUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsOpen(false);
+  };
+
+  const handleButtonClick = () => {
+    if (!user) {
+      setShowLoginModal(true);
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
@@ -176,17 +211,45 @@ export default function AdminPanel() {
 
   return (
     <>
+      {/* Botón flotante principal */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
-        onClick={() => setIsOpen(true)}
+        onClick={handleButtonClick}
         className="cursor-pointer fixed bottom-8 right-8 z-50 w-16 h-16 rounded-full bg-[var(--color-accent)] text-black shadow-2xl hover:shadow-[var(--color-accent)]/50 flex items-center justify-center transition-all duration-300"
+        title={user ? "Añadir foto" : "Iniciar sesión"}
       >
-        <FaPlus size={24} />
+        {user ? <FaPlus size={24} /> : <FaLock size={24} />}
       </motion.button>
 
-      {isOpen && (
+      {/* Botón de logout (solo visible si está logueado) */}
+      {user && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          onClick={handleLogout}
+          className="cursor-pointer fixed bottom-28 right-8 z-50 w-16 h-16 rounded-full bg-red-500 text-white shadow-2xl hover:shadow-red-500/50 flex items-center justify-center transition-all duration-300"
+          title="Cerrar sesión"
+        >
+          <FaSignOutAlt size={20} />
+        </motion.button>
+      )}
+
+      {/* Modal de login */}
+      <LoginModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={(user) => {
+          setUser(user);
+          setShowLoginModal(false);
+          setIsOpen(true);
+        }}
+      />
+
+            {/* Modal de añadir foto (solo si está autenticado) */}
+      {isOpen && user && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -533,3 +596,4 @@ export default function AdminPanel() {
     </>
   );
 }
+

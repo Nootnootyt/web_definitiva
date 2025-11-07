@@ -16,6 +16,25 @@ export default function AlbumFotos() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [albumPhotos, setAlbumPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+
+  // Verificar usuario autenticado
+  useEffect(() => {
+    checkUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      authListener?.subscription?.unsubscribe();
+    };
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
 
   // Cargar fotos desde Supabase
   useEffect(() => {
@@ -51,6 +70,11 @@ export default function AlbumFotos() {
   };
 
   const deletePhoto = async (photoId) => {
+    if (!user) {
+      alert('Debes iniciar sesión para eliminar fotos');
+      return;
+    }
+
     if (!confirm('¿Estás seguro de que quieres eliminar esta foto?')) return;
 
     try {
@@ -65,7 +89,7 @@ export default function AlbumFotos() {
       setAlbumPhotos(albumPhotos.filter(photo => photo.id !== photoId));
     } catch (error) {
       console.error('Error eliminando foto:', error);
-      alert('Error al eliminar la foto');
+      alert('Error al eliminar la foto. Asegúrate de estar autenticado.');
     }
   };
 
@@ -146,15 +170,18 @@ export default function AlbumFotos() {
                 variants={itemVariants}
                 className="relative group overflow-hidden rounded-2xl aspect-square"
               >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deletePhoto(photo.id);
-                  }}
-                  className="cursor-pointer absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
-                >
-                  <FaTrash size={16} />
-                </button>
+                {/* Botón de eliminar - solo visible si está autenticado */}
+                {user && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePhoto(photo.id);
+                    }}
+                    className="cursor-pointer absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                  >
+                    <FaTrash size={16} />
+                  </button>
+                )}
 
                 <motion.div
                   whileHover={{ y: -10, scale: 1.05 }}

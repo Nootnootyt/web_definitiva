@@ -7,6 +7,10 @@ Presiona Ctrl + C para detener el servidor
 
 Espera a que aparezca el prompt de nuevo (algo como PS G:\Web definitiva\portfolio-dinamico>)
 
+EJECUTAR ESTO ANTES DE SUBIR UN COMMIT:
+
+        npm run build
+
 Paso 2: (Opcional) Guardar Cambios en Git
 Si has hecho cambios desde el último commit:
 
