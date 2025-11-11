@@ -4,10 +4,9 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import PhotoModal from './PhotoModal';
 import EditPhotoModal from './EditPhotoModal';
-import { FaEdit, FaTimes } from 'react-icons/fa';
+import { FaEdit, FaTimes, FaImages } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
-
-import Link from 'next/link';  // ✅ AÑADE ESTA LÍNEA
+import Link from 'next/link';
 
 export default function PortfolioFotos() {
   const [ref, inView] = useInView({
@@ -134,75 +133,104 @@ export default function PortfolioFotos() {
 
   return (
     <>
-      <section id="portfolio" className="py-32 px-6 bg-black" ref={ref}>
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.8 }}
-          className="container mx-auto"
-        >
-          <div className="flex justify-between items-end mb-16">
-            <div>
-              <h2 className="text-6xl md:text-8xl font-black mb-4">
+      <section id="portfolio" className="py-20 md:py-32 px-4 md:px-6 bg-black" ref={ref}>
+        <div className="container mx-auto">
+          {/* Header con título y botón - MEJORADO PARA MÓVIL */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={inView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.8 }}
+            className="mb-12 md:mb-16"
+          >
+            {/* Título */}
+            <div className="mb-6 md:mb-8">
+              <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-3 md:mb-4 leading-tight">
                 <span className="text-white">MI</span>{' '}
                 <span style={{ color: 'var(--color-accent)' }}>PORTFOLIO</span>
               </h2>
-              <p className="text-gray-400 text-xl max-w-2xl">
+              <p className="text-gray-400 text-base md:text-xl max-w-2xl">
                 Una selección de mis mejores trabajos fotográficos
               </p>
             </div>
-            <Link href="/album">
-              <button className="cursor-pointer px-6 py-3 rounded-full bg-[var(--color-accent)] hover:bg-white text-black font-bold transition-all duration-300">
-                Ver Álbum Completo →
-              </button>
-            </Link>
-          </div>
 
+            {/* Botón Ver Álbum - CENTRADO Y VISIBLE EN MÓVIL */}
+            <Link href="/album">
+              <motion.button 
+                className="cursor-pointer w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-[var(--color-accent)] hover:bg-white text-black font-bold text-base md:text-lg transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-[var(--color-accent)]/50"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <FaImages className="text-xl" />
+                <span>Ver Álbum Completo</span>
+                <span className="hidden sm:inline">→</span>
+              </motion.button>
+            </Link>
+          </motion.div>
+
+          {/* Grid de fotos */}
           {portfolioPhotos.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-gray-500 text-xl">No hay fotos en el portfolio</p>
+            <motion.div 
+              className="text-center py-20"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              <FaImages className="text-6xl text-gray-700 mx-auto mb-6" />
+              <p className="text-gray-500 text-xl md:text-2xl mb-3">No hay fotos en el portfolio</p>
+              <p className="text-gray-600 text-sm md:text-base mb-6">
+                {user ? (
+                  <>Ve al <Link href="/album" className="text-[var(--color-accent)] underline">álbum</Link> y marca fotos para mostrar aquí</>
+                ) : (
+                  'Pronto habrá contenido disponible'
+                )}
+              </p>
               {user && (
-                <p className="text-gray-600 text-sm mt-2">
-                  Ve al <Link href="/album" className="text-[var(--color-accent)] underline">álbum</Link> y marca fotos para mostrar aquí
-                </p>
+                <Link href="/album">
+                  <button className="cursor-pointer px-6 py-3 bg-[var(--color-accent)] text-black font-bold rounded-full hover:bg-white transition-all">
+                    Ir al Álbum
+                  </button>
+                </Link>
               )}
-            </div>
+            </motion.div>
           ) : (
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={inView ? "visible" : "hidden"}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8"
             >
               {portfolioPhotos.map((photo) => (
                 <motion.div
                   key={photo.id}
                   variants={itemVariants}
-                  className="relative group overflow-hidden rounded-2xl aspect-square"
+                  className="relative group overflow-hidden rounded-xl md:rounded-2xl aspect-square"
                 >
-                  {/* Botones de admin */}
+                  {/* Botones de admin - OPTIMIZADOS PARA MÓVIL */}
                   {user && (
-                    <div className="absolute top-4 right-4 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
+                    <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <motion.button
                         onClick={(e) => {
                           e.stopPropagation();
                           openEditModal(photo);
                         }}
-                        className="cursor-pointer w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-all"
+                        className="cursor-pointer w-9 h-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-all shadow-lg"
                         title="Editar"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
                       >
-                        <FaEdit size={16} />
-                      </button>
-                      <button
+                        <FaEdit size={14} />
+                      </motion.button>
+                      <motion.button
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFromPortfolio(photo.id);
                         }}
-                        className="cursor-pointer w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all"
+                        className="cursor-pointer w-9 h-9 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all shadow-lg"
                         title="Quitar del portfolio"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <FaTimes size={16} />
-                      </button>
+                      </motion.button>
                     </div>
                   )}
 
@@ -222,7 +250,7 @@ export default function PortfolioFotos() {
 
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300" />
 
-                    <div className="absolute inset-0 flex flex-col justify-end p-6">
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6">
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileHover={{ opacity: 1, y: 0 }}
@@ -231,7 +259,7 @@ export default function PortfolioFotos() {
                         <span className="text-xs uppercase tracking-widest text-[var(--color-accent)] font-semibold mb-2 block">
                           {photo.category}
                         </span>
-                        <h3 className="text-2xl font-bold text-white mb-2">
+                        <h3 className="text-xl md:text-2xl font-bold text-white mb-2 line-clamp-2">
                           {photo.title}
                         </h3>
                         <div className="w-12 h-1 bg-[var(--color-accent)] group-hover:w-full transition-all duration-500" />
@@ -239,14 +267,14 @@ export default function PortfolioFotos() {
                     </div>
 
                     <motion.div
-                      className="absolute inset-0 border-2 border-transparent group-hover:border-[var(--color-accent)] transition-all duration-300 rounded-2xl"
+                      className="absolute inset-0 border-2 border-transparent group-hover:border-[var(--color-accent)] transition-all duration-300 rounded-xl md:rounded-2xl"
                     />
                   </motion.div>
                 </motion.div>
               ))}
             </motion.div>
           )}
-        </motion.div>
+        </div>
       </section>
 
       <PhotoModal 
