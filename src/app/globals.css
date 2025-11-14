@@ -186,3 +186,19 @@ html {
   transform: translateZ(0);
 }
 
+/* Ocultar cursor del sistema */
+body {
+  cursor: none;
+}
+
+/* Pero mostrar el cursor normal en inputs */
+input, textarea, select {
+  cursor: text !important;
+}
+
+/* En dispositivos táctiles, mantener cursor normal */
+@media (hover: none) and (pointer: coarse) {
+  body {
+    cursor: auto;
+  }
+}
