@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import ProductGrid from '@/components/shop/ProductGrid';
 import CartButton from '@/components/shop/CartButton';
 import CartSidebar from '@/components/shop/CartSidebar';
+import CustomCursor from '@/components/CustomCursor'; // ✅ AÑADIDO
 import { Toaster } from 'react-hot-toast';
 import { FaStore } from 'react-icons/fa';
 
@@ -42,6 +43,7 @@ export default function TiendaPage() {
 
   return (
     <>
+      <CustomCursor /> {/* ✅ AÑADIDO */}
       <Toaster position="top-right" />
       <CartButton />
       <CartSidebar />
@@ -67,29 +69,31 @@ export default function TiendaPage() {
           </motion.div>
 
           {/* Filtros de categoría */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="mb-8 flex flex-wrap gap-3"
-          >
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`
-                  px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-wider
-                  transition-all duration-300
-                  ${selectedCategory === category
-                    ? 'bg-[var(--color-accent)] text-black'
-                    : 'glass text-gray-400 hover:text-white hover:glass-accent'
-                  }
-                `}
-              >
-                {category === 'all' ? 'Todos' : category}
-              </button>
-            ))}
-          </motion.div>
+          {categories.length > 1 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mb-8 flex flex-wrap gap-3"
+            >
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`
+                    px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-wider
+                    transition-all duration-300
+                    ${selectedCategory === category
+                      ? 'bg-[var(--color-accent)] text-black'
+                      : 'glass text-gray-400 hover:text-white hover:glass-accent'
+                    }
+                  `}
+                >
+                  {category === 'all' ? 'Todos' : category}
+                </button>
+              ))}
+            </motion.div>
+          )}
 
           {/* Grid de productos */}
           {loading ? (
@@ -99,7 +103,16 @@ export default function TiendaPage() {
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-20">
               <FaStore className="text-6xl text-gray-700 mx-auto mb-4" />
-              <p className="text-gray-500 text-xl">No hay productos disponibles</p>
+              <p className="text-gray-500 text-xl mb-6">No hay productos disponibles</p>
+              <p className="text-gray-600 text-sm mb-4">
+                Inicia sesión como admin para añadir productos
+              </p>
+              <a 
+                href="/admin/tienda"
+                className="inline-block px-6 py-3 bg-[var(--color-accent)] text-black font-bold rounded-xl hover:bg-white transition-colors"
+              >
+                Ir al Panel Admin
+              </a>
             </div>
           ) : (
             <ProductGrid products={filteredProducts} />
