@@ -19,7 +19,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="relative max-w-7xl w-full bg-gray-900 rounded-3xl overflow-hidden shadow-2xl"
+          className="relative max-w-7xl w-full bg-gray-900 rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Botón cerrar */}
@@ -31,12 +31,12 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
           </button>
 
           <div className="grid md:grid-cols-2 gap-8 p-8">
-            {/* Imagen */}
-            <div className="relative aspect-square rounded-2xl overflow-hidden">
+            {/* Imagen - TAMAÑO COMPLETO sin recortar */}
+            <div className="flex items-center justify-center bg-gray-800 rounded-2xl p-4">
               <img
                 src={photo.image}
                 alt={photo.title}
-                className="w-full h-full object-cover"
+                className="w-full h-auto max-h-[600px] object-contain rounded-2xl"
               />
             </div>
 
