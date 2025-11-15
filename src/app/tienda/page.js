@@ -18,18 +18,13 @@ export default function TiendaPage() {
 
   useEffect(() => {
     checkUser();
+    loadProducts();
   }, []);
 
   const checkUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
   };
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
 
   const loadProducts = async () => {
     try {
@@ -48,20 +43,28 @@ export default function TiendaPage() {
     }
   };
 
-  const categories = ['all', ...new Set(products.map((p) => p.category))];
-
-  const filteredProducts =
-    selectedCategory === 'all'
-      ? products
-      : products.filter((p) => p.category === selectedCategory);
+  const categories = ['all', ...new Set(products.map(p => p.category))];
+  const filteredProducts = selectedCategory === 'all' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
 
   return (
     <>
+      {/* ✅ CSS para arreglar el cursor */}
+      <style jsx global>{`
+        body {
+          cursor: none !important;
+        }
+        button, a, input, textarea, select {
+          cursor: none !important;
+        }
+      `}</style>
+
       <Header />
       <Toaster position="top-right" />
       <CartButton />
       <CartSidebar />
-
+      
       <div className="min-h-screen bg-black pt-24 pb-20 px-4 md:px-6">
         <div className="container mx-auto">
           {/* Header */}
@@ -75,12 +78,10 @@ export default function TiendaPage() {
               <div className="flex items-center gap-3">
                 <FaStore className="text-4xl text-[var(--color-accent)]" />
                 <h1 className="text-5xl md:text-7xl font-black text-white">
-                  TIENDA{' '}
-                  <span className="text-[var(--color-accent)]">DEMO</span>
+                  TIENDA <span className="text-[var(--color-accent)]">DEMO</span>
                 </h1>
               </div>
-
-              {/* Botón Añadir Producto (solo admin) */}
+              
               {user && (
                 <button
                   onClick={() => setShowAddModal(true)}
@@ -91,14 +92,13 @@ export default function TiendaPage() {
                 </button>
               )}
             </div>
-
+            
             <p className="text-gray-400 text-lg md:text-xl max-w-3xl">
-              Ejemplo de e-commerce funcional. Sistema completo de gestión de
-              productos y pedidos.
+              Ejemplo de e-commerce funcional. Sistema completo de gestión de productos y pedidos.
             </p>
           </motion.div>
 
-          {/* Filtros de categoría */}
+          {/* Filtros */}
           {categories.length > 1 && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -110,15 +110,11 @@ export default function TiendaPage() {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`
-                    px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-wider
-                    transition-all duration-300
-                    ${
-                      selectedCategory === category
-                        ? 'bg-[var(--color-accent)] text-black'
-                        : 'glass text-gray-400 hover:text-white hover:glass-accent'
-                    }
-                  `}
+                  className={`px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-wider transition-all duration-300 ${
+                    selectedCategory === category
+                      ? 'bg-[var(--color-accent)] text-black'
+                      : 'glass text-gray-400 hover:text-white hover:glass-accent'
+                  }`}
                 >
                   {category === 'all' ? 'Todos' : category}
                 </button>
@@ -126,7 +122,7 @@ export default function TiendaPage() {
             </motion.div>
           )}
 
-          {/* Grid de productos */}
+          {/* Grid productos */}
           {loading ? (
             <div className="flex justify-center items-center py-20">
               <div className="w-16 h-16 border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
@@ -135,9 +131,7 @@ export default function TiendaPage() {
             <div className="text-center py-20">
               <FaStore className="text-6xl text-gray-700 mx-auto mb-4" />
               <p className="text-gray-500 text-xl mb-6">
-                {products.length === 0
-                  ? 'No hay productos disponibles'
-                  : 'No hay productos en esta categoría'}
+                {products.length === 0 ? 'No hay productos disponibles' : 'No hay productos en esta categoría'}
               </p>
               {products.length === 0 && user && (
                 <button
@@ -155,7 +149,6 @@ export default function TiendaPage() {
         </div>
       </div>
 
-      {/* Modal Añadir Producto */}
       {showAddModal && (
         <AddProductModal
           onClose={() => setShowAddModal(false)}
@@ -169,10 +162,10 @@ export default function TiendaPage() {
   );
 }
 
-// Modal para añadir producto - VERSIÓN COMPLETA
+// ✅ MODAL MEJORADO - Más compacto con scroll
 function AddProductModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
-  const [uploadMethod, setUploadMethod] = useState('url'); // 'url' o 'upload'
+  const [uploadMethod, setUploadMethod] = useState('url');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -180,7 +173,7 @@ function AddProductModal({ onClose, onSuccess }) {
     image: '',
     category: '',
     stock: 100,
-    available: true, // ✅ AÑADIDO
+    available: true,
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -206,9 +199,7 @@ function AddProductModal({ onClose, onSuccess }) {
   const uploadImageToSupabase = async (file) => {
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()
-        .toString(36)
-        .substring(2)}-${Date.now()}.${fileExt}`;
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `products/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -217,9 +208,9 @@ function AddProductModal({ onClose, onSuccess }) {
 
       if (uploadError) throw uploadError;
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('product-images').getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
 
       return publicUrl;
     } catch (error) {
@@ -235,21 +226,19 @@ function AddProductModal({ onClose, onSuccess }) {
     try {
       let imageUrl = formData.image;
 
-      // Si se subió una imagen, subirla a Supabase
       if (uploadMethod === 'upload' && imageFile) {
         imageUrl = await uploadImageToSupabase(imageFile);
       }
 
-      // Validar que hay una imagen
       if (!imageUrl) {
         toast.error('Debes proporcionar una imagen');
         setLoading(false);
         return;
       }
 
-      // ✅ CREAR PRODUCTO CON TODOS LOS CAMPOS
-      const { error } = await supabase.from('products').insert([
-        {
+      const { error } = await supabase
+        .from('products')
+        .insert([{
           name: formData.name,
           description: formData.description,
           price: parseFloat(formData.price),
@@ -257,9 +246,7 @@ function AddProductModal({ onClose, onSuccess }) {
           category: formData.category || 'General',
           stock: parseInt(formData.stock),
           available: formData.available,
-          // id y created_at se generan automáticamente
-        },
-      ]);
+        }]);
 
       if (error) throw error;
 
@@ -280,23 +267,19 @@ function AddProductModal({ onClose, onSuccess }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
+        className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       >
+        {/* ✅ MODAL MÁS COMPACTO con max-height y scroll */}
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
+          exit={{ scale: 0.95, opacity: 0 }}
           onClick={(e) => e.stopPropagation()}
-          className="glass-strong rounded-3xl max-w-3xl w-full my-8"
+          className="glass-strong rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
         >
-          {/* Header */}
-          <div className="sticky top-0 glass-dark p-6 flex justify-between items-center border-b border-gray-800 z-10 rounded-t-3xl">
-            <div>
-              <h2 className="text-2xl font-black text-white">Nuevo Producto</h2>
-              <p className="text-sm text-gray-400">
-                Completa todos los campos del producto
-              </p>
-            </div>
+          {/* Header fijo */}
+          <div className="glass-dark p-4 flex justify-between items-center border-b border-gray-800 flex-shrink-0">
+            <h2 className="text-xl font-black text-white">Nuevo Producto</h2>
             <button
               onClick={onClose}
               className="w-10 h-10 rounded-full glass-accent hover:bg-red-500 transition-colors flex items-center justify-center"
@@ -304,262 +287,156 @@ function AddProductModal({ onClose, onSuccess }) {
               <FaTimes />
             </button>
           </div>
-          {/* Formulario */}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* ========== CAMPO: IMAGEN ========== */}
-            <div className="glass rounded-2xl p-6 border-2 border-[var(--color-accent)]/30">
-              <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                📷 Imagen del producto *
-              </label>
-
-              <div className="flex gap-3 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setUploadMethod('url')}
-                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-                    uploadMethod === 'url'
-                      ? 'bg-[var(--color-accent)] text-black'
-                      : 'glass text-gray-400 hover:glass-accent'
-                  }`}
-                >
-                  <FaLink />
-                  URL de Imagen
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUploadMethod('upload')}
-                  className={`flex-1 px-4 py-3 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
-                    uploadMethod === 'upload'
-                      ? 'bg-[var(--color-accent)] text-black'
-                      : 'glass text-gray-400 hover:glass-accent'
-                  }`}
-                >
-                  <FaUpload />
-                  Subir Imagen
-                </button>
-              </div>
-
-              {uploadMethod === 'url' ? (
-                <input
-                  type="url"
-                  required
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  className="w-full px-4 py-3 glass rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                />
-              ) : (
-                <div>
-                  <label className="cursor-pointer block w-full px-4 py-8 glass rounded-xl border-2 border-dashed border-gray-700 hover:border-[var(--color-accent)] transition-colors text-center">
-                    <FaUpload className="text-4xl text-gray-600 mx-auto mb-3" />
-                    <p className="text-gray-400 mb-1 font-semibold">
-                      {imageFile
-                        ? imageFile.name
-                        : 'Click para seleccionar imagen'}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      PNG, JPG, WEBP (máx 5MB)
-                    </p>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                  </label>
-
-                  {imagePreview && (
-                    <div className="mt-4 rounded-xl overflow-hidden border-2 border-[var(--color-accent)]">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-64 object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* ========== CAMPO: NOMBRE ========== */}
-            <div className="glass rounded-2xl p-6">
-              <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                🏷️ Nombre del producto *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-4 py-3 glass rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                placeholder="Ej: MacBook Pro M3"
-              />
-            </div>
-
-            {/* ========== CAMPO: DESCRIPCIÓN ========== */}
-            <div className="glass rounded-2xl p-6">
-              <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                📝 Descripción
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={4}
-                className="w-full px-4 py-3 glass rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] resize-none"
-                placeholder="Descripción detallada del producto"
-              />
-            </div>
-
-            {/* ========== CAMPOS: PRECIO y STOCK ========== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="glass rounded-2xl p-6">
-                <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                  💰 Precio (€) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                  className="w-full px-4 py-3 glass rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  placeholder="19.99"
-                />
-              </div>
-
-              <div className="glass rounded-2xl p-6">
-                <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                  📦 Stock
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.stock}
-                  onChange={(e) =>
-                    setFormData({ ...formData, stock: e.target.value })
-                  }
-                  className="w-full px-4 py-3 glass rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                  placeholder="100"
-                />
-              </div>
-            </div>
-
-            {/* ========== CAMPO: CATEGORÍA ========== */}
-            <div className="glass rounded-2xl p-6">
-              <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                🏪 Categoría
-              </label>
-              <input
-                type="text"
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                className="w-full px-4 py-3 glass rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                placeholder="Ej: Electrónica, Ropa, Audio, Gaming..."
-              />
-            </div>
-
-            {/* ========== CAMPO: DISPONIBLE (AVAILABLE) ========== */}
-            <div className="glass rounded-2xl p-6">
-              <label className="text-lg font-bold text-white mb-3 block flex items-center gap-2">
-                👁️ Visibilidad del producto
-              </label>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.available}
-                    onChange={(e) =>
-                      setFormData({ ...formData, available: e.target.checked })
-                    }
-                    className="w-6 h-6 rounded accent-[var(--color-accent)]"
-                  />
-                  <span className="text-white font-semibold">
-                    Producto visible en tienda pública
-                  </span>
-                </label>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">
-                {formData.available
-                  ? '✅ Los clientes podrán ver y comprar este producto'
-                  : '❌ El producto estará oculto para los clientes'}
-              </p>
-            </div>
-
-            {/* ========== RESUMEN DE DATOS ========== */}
-            <div className="glass-accent rounded-2xl p-6 border-2 border-[var(--color-accent)]/50">
-              <h3 className="text-lg font-bold text-white mb-4">
-                📋 Resumen del producto:
-              </h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Nombre:</span>
-                  <span className="text-white font-semibold">
-                    {formData.name || '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Precio:</span>
-                  <span className="text-[var(--color-accent)] font-bold">
-                    {formData.price ? `€${formData.price}` : '-'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Stock:</span>
-                  <span className="text-white font-semibold">
-                    {formData.stock}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Categoría:</span>
-                  <span className="text-white font-semibold">
-                    {formData.category || 'General'}
-                  </span>
-                </div>
-                <div className="flex justify-between col-span-2">
-                  <span className="text-gray-400">Estado:</span>
-                  <span
-                    className={`font-semibold ${
-                      formData.available ? 'text-green-500' : 'text-red-500'
+          {/* Contenido con scroll */}
+          <div className="overflow-y-auto flex-1 p-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Imagen */}
+              <div>
+                <label className="text-sm font-bold text-white mb-2 block">📷 Imagen *</label>
+                <div className="flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('url')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      uploadMethod === 'url' ? 'bg-[var(--color-accent)] text-black' : 'glass text-gray-400'
                     }`}
                   >
-                    {formData.available ? 'Visible' : 'Oculto'}
-                  </span>
+                    <FaLink className="inline mr-1" /> URL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod('upload')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      uploadMethod === 'upload' ? 'bg-[var(--color-accent)] text-black' : 'glass text-gray-400'
+                    }`}
+                  >
+                    <FaUpload className="inline mr-1" /> Subir
+                  </button>
+                </div>
+
+                {uploadMethod === 'url' ? (
+                  <input
+                    type="url"
+                    required
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-3 py-2 glass rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                  />
+                ) : (
+                  <div>
+                    <label className="cursor-pointer block w-full px-3 py-6 glass rounded-lg border-2 border-dashed border-gray-700 hover:border-[var(--color-accent)] transition-colors text-center">
+                      <FaUpload className="text-3xl text-gray-600 mx-auto mb-2" />
+                      <p className="text-gray-400 text-sm">{imageFile ? imageFile.name : 'Click para seleccionar'}</p>
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                    {imagePreview && (
+                      <img src={imagePreview} alt="Preview" className="mt-3 w-full h-32 object-cover rounded-lg" />
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Nombre */}
+              <div>
+                <label className="text-sm font-bold text-white mb-2 block">🏷️ Nombre *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 glass rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  placeholder="Ej: MacBook Pro M3"
+                />
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="text-sm font-bold text-white mb-2 block">📝 Descripción</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 glass rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] resize-none"
+                  placeholder="Descripción breve"
+                />
+              </div>
+
+              {/* Precio y Stock */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-bold text-white mb-2 block">💰 Precio (€) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    required
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="w-full px-3 py-2 glass rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    placeholder="19.99"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-white mb-2 block">📦 Stock</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                    className="w-full px-3 py-2 glass rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    placeholder="100"
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* ========== BOTÓN SUBMIT ========== */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-5 bg-[var(--color-accent)] text-black font-black text-xl rounded-xl hover:bg-white transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center gap-3 shadow-2xl shadow-[var(--color-accent)]/50"
-            >
-              {loading ? (
-                <>
-                  <div className="w-6 h-6 border-3 border-black border-t-transparent rounded-full animate-spin" />
-                  <span>Creando producto...</span>
-                </>
-              ) : (
-                <>
-                  <FaPlus className="text-2xl" />
-                  <span>CREAR PRODUCTO</span>
-                </>
-              )}
-            </button>
-          </form>
+              {/* Categoría */}
+              <div>
+                <label className="text-sm font-bold text-white mb-2 block">🏪 Categoría</label>
+                <input
+                  type="text"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-3 py-2 glass rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  placeholder="Electrónica, Ropa, etc."
+                />
+              </div>
+
+              {/* Disponible */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="available"
+                  checked={formData.available}
+                  onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
+                  className="w-5 h-5 rounded accent-[var(--color-accent)]"
+                />
+                <label htmlFor="available" className="text-white font-semibold text-sm">
+                  Visible en tienda pública
+                </label>
+              </div>
+
+              {/* Botón */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-[var(--color-accent)] text-black font-bold rounded-xl hover:bg-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <span>Creando...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaPlus />
+                    <span>CREAR PRODUCTO</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
