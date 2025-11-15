@@ -186,7 +186,7 @@ export default function Hero3D() {
               transform: 'translateZ(0)',
             }}
           >
-            <span className="text-white">CÓDIGO &</span>
+            <span className="text-white">PROGRAMADOR &</span>
             <br />
             <motion.span
               key={currentRole}
@@ -232,8 +232,8 @@ export default function Hero3D() {
           >
             <FaCamera className="text-lg md:text-2xl text-[var(--color-accent)] flex-shrink-0" />
             <p className="text-xs sm:text-sm md:text-base text-center">
-              En mi tiempo libre, exploro el mundo con mi{' '}
-              <span className="text-white font-semibold">cámara</span> y{' '}
+              En mi tiempo libre, capturo lugares interesantes con mi{' '}
+              <span className="text-white font-semibold">cámara</span> y mi{' '}
               <span className="text-white font-semibold">dron</span>
             </p>
           </motion.div>
@@ -257,7 +257,7 @@ export default function Hero3D() {
                 transform: 'translateZ(0)',
               }}
             >
-              Ver Portfolio
+              Fotos destacadas
             </button>
             
             <button

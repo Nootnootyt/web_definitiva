@@ -100,8 +100,8 @@ export default function PortfolioFotos() {
           >
             <div className="mb-6 md:mb-8">
               <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-3 md:mb-4 leading-tight">
-                <span className="text-white">MI</span>{' '}
-                <span style={{ color: 'var(--color-accent)' }}>PORTFOLIO</span>
+                <span className="text-white">FOTOS</span>{' '}
+                <span style={{ color: 'var(--color-accent)' }}>DESTACADAS</span>
               </h2>
               <p className="text-gray-400 text-base md:text-xl max-w-2xl">
                 Una selección de mis mejores trabajos fotográficos
@@ -120,7 +120,7 @@ export default function PortfolioFotos() {
           {portfolioPhotos.length === 0 ? (
             <div className="text-center py-20">
               <FaImages className="text-6xl text-gray-700 mx-auto mb-6" />
-              <p className="text-gray-500 text-xl md:text-2xl">No hay fotos en el portfolio</p>
+              <p className="text-gray-500 text-xl md:text-2xl">No hay fotos destacadas</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">

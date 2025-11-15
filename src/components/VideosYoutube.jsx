@@ -11,26 +11,32 @@ export default function VideosYoutube() {
   const videos = [
     {
       id: 1,
-      embedId: 'eEc3IvWyGa8', // Reemplaza con tus IDs de video
-      title: 'DJI Mini 4K | Embalse de Los Melonares Sevilla',
-      description: 'A vista de dron QHD 60fps'
+      embedId: 'eEc3IvWyGa8',
+      title: 'Embalse de Los Melonares',
+      description: 'Sevilla a vista de dron QHD 60fps'
     },
     {
       id: 2,
       embedId: 'N8u68iPCgIY',
-      title: 'DJI Mini 4K | Praia da Marinha',
-      description: 'A vista de dron QHD 60fps'
+      title: 'Praia da Marinha',
+      description: 'Portugal a vista de dron QHD 60fps'
+    },
+    {
+      id: 3,
+      embedId: 'eEc3IvWyGa8', // ✅ Cambia por tu tercer video
+      title: 'Tercer Vídeo',
+      description: 'Descripción del tercer vídeo'
     },
   ];
 
   return (
     <section id="videos" className="py-32 px-6 bg-gradient-to-b from-black to-gray-900" ref={ref}>
-      <div className="container mx-auto">
+      <div className="container mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="text-center mb-16"
         >
           <h2 className="text-6xl md:text-8xl font-black mb-4">
             <span style={{ color: 'var(--color-accent)' }}>VÍDEOS</span>{' '}
@@ -41,47 +47,94 @@ export default function VideosYoutube() {
           </p>
         </motion.div>
 
-        <div className="space-y-16">
-          {videos.map((video, index) => (
-            <motion.div
-              key={video.id}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -100 : 100 }}
-              animate={inView ? { opacity: 1, x: 0 } : {}}
-              transition={{ duration: 0.8, delay: index * 0.2 }}
-              className="relative group"
-            >
-              <div className="relative overflow-hidden rounded-3xl">
-                {/* Border glow effect */}
-                <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-accent)] to-purple-600 rounded-3xl opacity-0 group-hover:opacity-75 blur-lg transition-opacity duration-500" />
-                
-                <div className="relative bg-black rounded-3xl overflow-hidden">
-                  <div className="aspect-video relative">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${video.embedId}`}
-                      title={video.title}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full"
-                    />
-                  </div>
+        {/* Grid de videos: 2 arriba, 1 abajo centrado */}
+        <div className="space-y-8">
+          {/* Fila superior: 2 videos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {videos.slice(0, 2).map((video, index) => (
+              <motion.div
+                key={video.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
+                className="relative group"
+              >
+                <div className="relative overflow-hidden rounded-2xl">
+                  {/* Border glow effect */}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-accent)] to-purple-600 rounded-2xl opacity-0 group-hover:opacity-75 blur-lg transition-opacity duration-500" />
                   
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ delay: index * 0.2 + 0.3 }}
-                    className="p-8 bg-gradient-to-t from-black to-transparent"
-                  >
-                    <h3 className="text-3xl font-bold text-white mb-2">
-                      {video.title}
-                    </h3>
-                    <p className="text-gray-400 text-lg">
-                      {video.description}
-                    </p>
-                  </motion.div>
+                  <div className="relative bg-black rounded-2xl overflow-hidden border-2 border-gray-800 hover:border-[var(--color-accent)] transition-colors">
+                    <div className="aspect-video relative">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${video.embedId}`}
+                        title={video.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={inView ? { opacity: 1 } : {}}
+                      transition={{ delay: index * 0.15 + 0.3 }}
+                      className="p-6 bg-gradient-to-t from-black to-transparent"
+                    >
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        {video.title}
+                      </h3>
+                      <p className="text-gray-400 text-base">
+                        {video.description}
+                      </p>
+                    </motion.div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Fila inferior: 1 video centrado */}
+          {videos.length > 2 && (
+            <div className="flex justify-center">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="relative group w-full md:w-1/2"
+              >
+                <div className="relative overflow-hidden rounded-2xl">
+                  {/* Border glow effect */}
+                  <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-accent)] to-purple-600 rounded-2xl opacity-0 group-hover:opacity-75 blur-lg transition-opacity duration-500" />
+                  
+                  <div className="relative bg-black rounded-2xl overflow-hidden border-2 border-gray-800 hover:border-[var(--color-accent)] transition-colors">
+                    <div className="aspect-video relative">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videos[2].embedId}`}
+                        title={videos[2].title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    </div>
+                    
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={inView ? { opacity: 1 } : {}}
+                      transition={{ delay: 0.5 }}
+                      className="p-6 bg-gradient-to-t from-black to-transparent"
+                    >
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        {videos[2].title}
+                      </h3>
+                      <p className="text-gray-400 text-base">
+                        {videos[2].description}
+                      </p>
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
         </div>
       </div>
     </section>

@@ -6,12 +6,16 @@ import { FaBars, FaTimes, FaSignInAlt, FaSignOutAlt, FaUser, FaShoppingBag, FaBo
 import { supabase } from '@/lib/supabase';
 import LoginModal from './LoginModal';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';  // ✅ AÑADIDO
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  const pathname = usePathname();  // ✅ AÑADIDO
+  const router = useRouter();      // ✅ AÑADIDO
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,6 +61,7 @@ export default function Header() {
 
   const navItems = ['Inicio', 'Portfolio', 'Videos', 'Contacto'];
 
+  // ✅ FUNCIÓN MEJORADA: navega si no estás en home, scroll si estás en home
   const scrollToSection = (item) => {
     const sectionMap = {
       'Inicio': 'hero',
@@ -65,10 +70,18 @@ export default function Header() {
       'Contacto': 'contacto'
     };
     const sectionId = sectionMap[item];
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+    
+    // Si estamos en la home, hacer scroll
+    if (pathname === '/') {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      // Si estamos en otra ruta, navegar a home con hash
+      router.push(`/#${sectionId}`);
     }
+    
     setMobileMenuOpen(false);
   };
 
@@ -132,7 +145,7 @@ export default function Header() {
                 </motion.button>
               </Link>
 
-              {/* ✅ NUEVO: Enlace a Pedidos (solo si está autenticado) */}
+              {/* Enlace a Pedidos (solo si está autenticado) */}
               {user && (
                 <Link href="/admin/pedidos">
                   <motion.button
@@ -199,7 +212,7 @@ export default function Header() {
                 </motion.button>
               </Link>
 
-              {/* ✅ NUEVO: Pedidos en tablet (solo si está autenticado) */}
+              {/* Pedidos en tablet (solo si está autenticado) */}
               {user && (
                 <Link href="/admin/pedidos">
                   <motion.button
@@ -309,7 +322,7 @@ export default function Header() {
                 </motion.button>
               </Link>
 
-              {/* ✅ NUEVO: Pedidos en móvil (solo si está autenticado) */}
+              {/* Pedidos en móvil (solo si está autenticado) */}
               {user && (
                 <Link href="/admin/pedidos">
                   <motion.button
