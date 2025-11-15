@@ -13,7 +13,7 @@ export default function VideosYoutube() {
       id: 1,
       embedId: 'eEc3IvWyGa8',
       title: 'Embalse de Los Melonares',
-      description: 'Sevilla a vista de dron QHD 60fps'
+      description: 'Embalse de los Melonares a vista de dron QHD 60fps'
     },
     {
       id: 2,
@@ -24,8 +24,8 @@ export default function VideosYoutube() {
     {
       id: 3,
       embedId: 'aAIAAR9ZkaI', 
-      title: 'Tercer Vídeo',
-      description: 'Descripción del tercer vídeo'
+      title: 'Praia do Barrill, Santa Luzia',
+      description: 'Praia do Barril, Ilha de Tavira. Desde el aire con dron 1080p 60fps'
     },
   ];
 

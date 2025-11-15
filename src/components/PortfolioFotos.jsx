@@ -90,7 +90,7 @@ export default function PortfolioFotos() {
 
   return (
     <>
-      <section id="portfolio" className="py-20 md:py-32 px-4 md:px-6 bg-black" ref={ref}>
+      <section id="destacado" className="py-20 md:py-32 px-4 md:px-6 bg-black" ref={ref}>
         <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, x: -50 }}
@@ -158,7 +158,7 @@ export default function PortfolioFotos() {
                   {/* IMAGEN DIRECTA SIN ANIMACIONES */}
                   <img
                     src={photo.image}
-                    alt={photo.title || 'Portfolio'}
+                    alt={photo.title || 'Destacado'}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     loading="lazy"
                   />

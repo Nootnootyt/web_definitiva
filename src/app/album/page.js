@@ -227,7 +227,7 @@ export default function AlbumPage() {
                     {photo.in_portfolio && (
                       <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-[var(--color-accent)] text-black rounded-full text-xs font-bold flex items-center gap-1">
                         <FaStar size={8} />
-                        <span className="hidden sm:inline">Portfolio</span>
+                        <span className="hidden sm:inline">Destacada</span>
                       </div>
                     )}
 
