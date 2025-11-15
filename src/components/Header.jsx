@@ -59,13 +59,13 @@ export default function Header() {
     };
   }, [mobileMenuOpen]);
 
-  const navItems = ['Inicio', 'Portfolio', 'Videos', 'Contacto'];
+  const navItems = ['Inicio', 'Destacado', 'Videos', 'Contacto'];
 
   // ✅ FUNCIÓN MEJORADA: navega si no estás en home, scroll si estás en home
   const scrollToSection = (item) => {
     const sectionMap = {
       'Inicio': 'hero',
-      'Portfolio': 'portfolio',
+      'Destacado': 'destacado',
       'Videos': 'videos',
       'Contacto': 'contacto'
     };
@@ -106,8 +106,8 @@ export default function Header() {
                 whileHover={{ scale: 1.05 }}
                 className="text-2xl font-black"
               >
-                <span className="text-white">JAVIER</span>{' '}
-                <span style={{ color: 'var(--color-accent)' }}>JIMÉNEZ</span>
+                <span className="text-white">AETHE</span>{' '}
+                <span style={{ color: 'var(--color-accent)' }}>RIS</span>
               </motion.div>
             </Link>
 

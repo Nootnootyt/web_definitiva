@@ -23,7 +23,7 @@ export default function VideosYoutube() {
     },
     {
       id: 3,
-      embedId: 'eEc3IvWyGa8', // ✅ Cambia por tu tercer video
+      embedId: 'aAIAAR9ZkaI', 
       title: 'Tercer Vídeo',
       description: 'Descripción del tercer vídeo'
     },
