@@ -6,6 +6,7 @@ import ProductGrid from '@/components/shop/ProductGrid';
 import CartButton from '@/components/shop/CartButton';
 import CartSidebar from '@/components/shop/CartSidebar';
 import Header from '@/components/Header';
+import CustomCursor from '@/components/CustomCursor'; // ✅ AÑADIDO
 import { Toaster, toast } from 'react-hot-toast';
 import { FaStore, FaPlus, FaTimes, FaUpload, FaLink } from 'react-icons/fa';
 
@@ -50,16 +51,7 @@ export default function TiendaPage() {
 
   return (
     <>
-      {/* ✅ CSS para arreglar el cursor */}
-      <style jsx global>{`
-        body {
-          cursor: none !important;
-        }
-        button, a, input, textarea, select {
-          cursor: none !important;
-        }
-      `}</style>
-
+      <CustomCursor /> {/* ✅ CURSOR PERSONALIZADO */}
       <Header />
       <Toaster position="top-right" />
       <CartButton />
@@ -162,7 +154,7 @@ export default function TiendaPage() {
   );
 }
 
-// ✅ MODAL MEJORADO - Más compacto con scroll
+// Modal mejorado (igual que antes)
 function AddProductModal({ onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [uploadMethod, setUploadMethod] = useState('url');
@@ -269,7 +261,6 @@ function AddProductModal({ onClose, onSuccess }) {
         onClick={onClose}
         className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       >
-        {/* ✅ MODAL MÁS COMPACTO con max-height y scroll */}
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -277,7 +268,6 @@ function AddProductModal({ onClose, onSuccess }) {
           onClick={(e) => e.stopPropagation()}
           className="glass-strong rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
         >
-          {/* Header fijo */}
           <div className="glass-dark p-4 flex justify-between items-center border-b border-gray-800 flex-shrink-0">
             <h2 className="text-xl font-black text-white">Nuevo Producto</h2>
             <button
@@ -288,7 +278,6 @@ function AddProductModal({ onClose, onSuccess }) {
             </button>
           </div>
 
-          {/* Contenido con scroll */}
           <div className="overflow-y-auto flex-1 p-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Imagen */}
