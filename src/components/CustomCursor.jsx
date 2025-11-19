@@ -1,8 +1,9 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 
-export default function CustomCursor() {
+export default function LiquidGlassCursor() {
   const [isHovering, setIsHovering] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
@@ -12,7 +13,7 @@ export default function CustomCursor() {
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
 
-  // Config física suave
+  // Configuración física suave
   const springConfig = {
     damping: 25,
     stiffness: 350,
@@ -24,8 +25,7 @@ export default function CustomCursor() {
 
   useEffect(() => {
     setIsMounted(true);
-    const checkTouch = () =>
-      'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const checkTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     setIsTouchDevice(checkTouch());
   }, []);
 
@@ -41,9 +41,7 @@ export default function CustomCursor() {
     const handleMouseUp = () => setIsClicking(false);
 
     const handleHoverElements = () => {
-      const els = document.querySelectorAll(
-        'button, a, input, textarea, .cursor-pointer'
-      );
+      const els = document.querySelectorAll('button, a, input, textarea, .cursor-pointer');
       els.forEach((el) => {
         el.addEventListener('mouseenter', () => setIsHovering(true));
         el.addEventListener('mouseleave', () => setIsHovering(false));
@@ -70,281 +68,145 @@ export default function CustomCursor() {
 
   return (
     <motion.div
-      className="fixed top-0 left-0 pointer-events-none z-[9999]"
       style={{
         x: smoothX,
         y: smoothY,
-        // Ajuste para que el vértice de la flecha sea la “punta” real
-        translateX: '-10%',
-        translateY: '-5%',
+        translateX: -32, // Offset para centrar la punta de la flecha
+        translateY: -24,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: 64,
+        height: 48,
+        zIndex: 9999,
+        pointerEvents: 'none',
+        userSelect: 'none',
+        willChange: 'transform',
       }}
+      animate={{
+        scale: isHovering || isClicking ? 1.1 : 1,
+        opacity: isHovering ? 0.9 : 1,
+      }}
+      transition={{ duration: 0.1 }}
     >
-      <motion.div
-        animate={{
-          scale: isClicking ? 0.9 : isHovering ? 1.15 : 1,
-        }}
-        transition={{ type: 'spring', stiffness: 450, damping: 28 }}
-        className="relative"
+      {/* SVG para la forma de flecha Windows con efectos de liquid glass */}
+      <svg
+        width="64"
+        height="48"
+        viewBox="0 0 64 48"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
         style={{
-          // Cursor grande para apreciar bien los efectos
-          width: '72px',
-          height: '96px',
-          filter:
-            'drop-shadow(0px 18px 32px rgba(0, 0, 0, 0.35)) drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.18))',
+          filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.3))', // Halo sutil azulado
+          backdropFilter: 'blur(10px) saturate(1.2)', // Efecto de cristal translúcido
+          background: 'rgba(255, 255, 255, 0.1)', // Base translúcida
         }}
       >
-        {/* Flecha tipo Windows pero con estética cristal / liquid glass */}
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 72 96"
+        {/* Definición de clip-path para la forma de flecha clásica de Windows */}
+        <defs>
+          <clipPath id="arrowClip">
+            <path d="M0 0 L64 24 L0 48 L12 24 Z" /> {/* Triángulo principal con remate inferior */}
+          </clipPath>
+          {/* Filtro para refracción/simulación de cristal curvado */}
+          <filter id="glassRefraction" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blurred" />
+            <feDisplacementMap
+              in="blurred"
+              in2="SourceGraphic"
+              scale="5"
+              xChannelSelector="R"
+              yChannelSelector="G"
+              result="displaced"
+            />
+            <feMerge>
+              <feMergeNode in="displaced" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          {/* Filtro para highlights y bordes refractados */}
+          <filter id="highlightRefraction">
+            <feGaussianBlur stdDeviation="1" result="highlightBlur" />
+            <feFlood floodColor="rgba(255, 255, 255, 0.6)" floodOpacity="0.5" result="highlightColor" />
+            <feComposite in="highlightColor" in2="highlightBlur" operator="in" result="highlight" />
+            <feMerge>
+              <feMergeNode in="highlight" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Capa base translúcida con gradiente */}
+        <g clipPath="url(#arrowClip)">
+          <rect width="64" height="48" fill="url(#baseGradient)" filter="url(#glassRefraction)" />
+        </g>
+
+        {/* Gradiente base para translucidez */}
+        <defs>
+          <linearGradient id="baseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgba(255, 255, 255, 0.15)" />
+            <stop offset="50%" stopColor="rgba(255, 255, 255, 0.05)" />
+            <stop offset="100%" stopColor="rgba(255, 255, 255, 0.1)" />
+          </linearGradient>
+        </defs>
+
+        {/* Borde principal con refracción (simulando cristal curvado) */}
+        <path
+          d="M0 0 L64 24 L0 48 L12 24 Z"
+          stroke="rgba(0, 0, 0, 0.2)"
+          strokeWidth="1"
           fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ position: 'absolute', inset: 0 }}
-        >
-          <defs>
-            {/* Gradiente principal: cristal neutro translúcido */}
-            <linearGradient id="cursorGlassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.80)" />
-              <stop offset="40%" stopColor="rgba(230,240,255,0.40)" />
-              <stop offset="100%" stopColor="rgba(210,225,255,0.15)" />
-            </linearGradient>
-
-            {/* Halo de color muy sutil (tono azulado / púrpura tipo iOS) */}
-            <radialGradient id="cursorIridescence" cx="30%" cy="20%" r="80%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.7)" />
-              <stop offset="35%" stopColor="rgba(210,230,255,0.5)" />
-              <stop offset="70%" stopColor="rgba(150,190,255,0.25)" />
-              <stop offset="100%" stopColor="rgba(120,170,255,0)" />
-            </radialGradient>
-
-            {/* Highlight superior */}
-            <linearGradient id="cursorHighlightGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
-              <stop offset="45%" stopColor="rgba(255,255,255,0.55)" />
-              <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-            </linearGradient>
-
-            {/* Borde interior frío (refracción) */}
-            <linearGradient id="cursorEdgeRefraction" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="rgba(180,210,255,0.85)" />
-              <stop offset="35%" stopColor="rgba(140,180,255,0.55)" />
-              <stop offset="70%" stopColor="rgba(100,160,255,0.3)" />
-              <stop offset="100%" stopColor="rgba(70,130,255,0.2)" />
-            </linearGradient>
-
-            {/* Blur para reflejos internos */}
-            <filter id="cursorGlassBlur" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" />
-            </filter>
-
-            {/* Blur ligero para la línea de refracción */}
-            <filter id="cursorEdgeSoft">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="0.6" />
-            </filter>
-
-            {/* ClipPath con forma de flecha clásica de Windows, pero suavizada */}
-            <clipPath id="cursorArrowClip">
-              {/* 
-                Forma inspirada en el cursor Windows:
-                - Triángulo principal
-                - Remate de “cola” inferior
-                - Esquinas suavizadas para que encaje con el estilo “liquid glass”
-              */}
-              <path
-                d="
-                  M 8 6
-                  L 8 72
-                  L 24 58
-                  L 32 80
-                  Q 33 83 36 82
-                  L 42 80
-                  Q 45 79 44 76
-                  L 36 54
-                  L 60 54
-                  Q 64 54 66 50
-                  L 68 46
-                  Q 70 42 66 40
-                  L 10 6
-                  Q 8 5 8 6
-                  Z
-                "
-              />
-            </clipPath>
-          </defs>
-
-          {/* BASE DEL CRISTAL */}
-          <g clipPath="url(#cursorArrowClip)">
-            {/* Base translúcida principal */}
-            <rect
-              x="0"
-              y="0"
-              width="100%"
-              height="100%"
-              fill="url(#cursorGlassGradient)"
-            />
-
-            {/* Capa de iridiscencia tipo “liquid glass” */}
-            <rect
-              x="0"
-              y="0"
-              width="100%"
-              height="100%"
-              fill="url(#cursorIridescence)"
-              opacity="0.9"
-            />
-
-            {/* Banda lateral simulando refracción más intensa en un borde */}
-            <rect
-              x="0"
-              y="0"
-              width="24"
-              height="96"
-              fill="rgba(255,255,255,0.35)"
-              opacity="0.55"
-              filter="url(#cursorGlassBlur)"
-            />
-          </g>
-
-          {/* BORDE PRINCIPAL (similar al perfil negro del cursor clásico) */}
-          <path
-            d="
-              M 8 6
-              L 8 72
-              L 24 58
-              L 32 80
-              Q 33 83 36 82
-              L 42 80
-              Q 45 79 44 76
-              L 36 54
-              L 60 54
-              Q 64 54 66 50
-              L 68 46
-              Q 70 42 66 40
-              L 10 6
-              Q 8 5 8 6
-              Z
-            "
-            stroke="rgba(0,0,0,0.55)"
-            strokeWidth="2.2"
-            fill="none"
-            strokeLinejoin="round"
-          />
-
-          {/* BORDE INTERIOR CON REFRACCIÓN (azulados) */}
-          <path
-            d="
-              M 10 9
-              L 10 68
-              L 24.5 56
-              L 33 77
-              Q 33.8 79.2 36.1 78.5
-              L 41 77
-              Q 43.2 76.4 42.5 74.3
-              L 34 52
-              L 58 52
-              Q 61.5 52 63.5 49
-              L 65 46
-              Q 66.5 43.2 63.7 41.7
-              L 11.5 9.5
-              Q 10.3 8.7 10 9
-              Z
-            "
-            stroke="url(#cursorEdgeRefraction)"
-            strokeWidth="1.4"
-            fill="none"
-            strokeLinejoin="round"
-            filter="url(#cursorEdgeSoft)"
-            opacity="0.95"
-          />
-
-          {/* HIGHLIGHT SUPERIOR (borde brillante tipo cristal curvado) */}
-          <path
-            d="
-              M 10.5 10
-              L 10.5 32
-              L 32 47
-              Q 33 47.6 34 47
-              L 60 48
-              Q 62 48 63 46.5
-              L 64.5 44
-              Q 65.8 41.8 64 40.6
-              L 14 12
-              Q 11.8 10.8 10.5 10
-              Z
-            "
-            fill="url(#cursorHighlightGradient)"
-            opacity="0.90"
-            filter="url(#cursorGlassBlur)"
-          />
-
-          {/* REFLEJOS ELÍPTICOS INTERNOS (gota de agua / bordes curvos) */}
-          <ellipse
-            cx="20"
-            cy="22"
-            rx="9"
-            ry="14"
-            fill="rgba(255,255,255,0.65)"
-            filter="url(#cursorGlassBlur)"
-            opacity="0.80"
-          />
-          <ellipse
-            cx="30"
-            cy="40"
-            rx="7"
-            ry="11"
-            fill="rgba(255,255,255,0.40)"
-            filter="url(#cursorGlassBlur)"
-            opacity="0.85"
-          />
-          <ellipse
-            cx="44"
-            cy="32"
-            rx="6"
-            ry="10"
-            fill="rgba(200,220,255,0.45)"
-            filter="url(#cursorGlassBlur)"
-            opacity="0.75"
-          />
-
-          {/* BORDE EXTERNO MUY SUTIL PARA REMATAR EL LOOK DE CRISTAL */}
-          <path
-            d="
-              M 8 6
-              L 8 72
-              L 24 58
-              L 32 80
-              Q 33 83 36 82
-              L 42 80
-              Q 45 79 44 76
-              L 36 54
-              L 60 54
-              Q 64 54 66 50
-              L 68 46
-              Q 70 42 66 40
-              L 10 6
-              Q 8 5 8 6
-              Z
-            "
-            stroke="rgba(255,255,255,0.38)"
-            strokeWidth="0.9"
-            fill="none"
-            strokeLinejoin="round"
-          />
-        </svg>
-
-        {/* Capa de backdrop-filter para cristal real que refracta el fondo */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            backdropFilter: 'blur(14px) saturate(1.4) brightness(1.06)',
-            WebkitBackdropFilter: 'blur(14px) saturate(1.4) brightness(1.06)',
-            clipPath: `path('M 8 6 L 8 72 L 24 58 L 32 80 Q 33 83 36 82 L 42 80 Q 45 79 44 76 L 36 54 L 60 54 Q 64 54 66 50 L 68 46 Q 70 42 66 40 L 10 6 Q 8 5 8 6 Z')`,
-            opacity: 0.55,
-          }}
+          filter="url(#glassRefraction)"
+          opacity="0.8"
         />
-      </motion.div>
+
+        {/* Highlight superior para efecto de luz en cristal */}
+        <path
+          d="M0 0 L64 24 L32 12 Z"
+          fill="url(#highlightGradient)"
+          filter="url(#highlightRefraction)"
+          opacity="0.7"
+        />
+
+        {/* Gradiente para highlight */}
+        <defs>
+          <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="rgba(255, 255, 255, 0.8)" />
+            <stop offset="100%" stopColor="rgba(255, 255, 255, 0.2)" />
+          </linearGradient>
+        </defs>
+
+        {/* Reflejos internos elípticos (gota de agua en bordes) */}
+        <ellipse
+          cx="20"
+          cy="24"
+          rx="8"
+          ry="4"
+          fill="rgba(255, 255, 255, 0.3)"
+          filter="url(#highlightRefraction)"
+          opacity="0.6"
+        />
+
+        {/* Borde exterior sutil para rematar el cristal */}
+        <path
+          d="M0 0 L64 24 L0 48 L12 24 Z"
+          stroke="rgba(255, 255, 255, 0.1)"
+          strokeWidth="0.5"
+          fill="none"
+        />
+
+        {/* Efecto de refracción en bordes inferiores (gota-like) */}
+        <path
+          d="M0 48 L12 24 L0 36 Z"
+          fill="rgba(59, 130, 246, 0.1)" // Tono azulado sutil
+          filter="url(#glassRefraction)"
+          opacity="0.5"
+        />
+      </svg>
+
+      {/* Ocultar cursor por defecto */}
+      <style jsx global>{`
+        body { cursor: none; }
+      `}</style>
     </motion.div>
   );
 }
