@@ -1,17 +1,14 @@
-/* ========= globals.css (optimizado) =========
-   Objetivos:
-   - Reset ligero y accesible
-   - Mejor rendimiento (font-display, image optimizations, content-visibility)
-   - Preferencias de usuario (prefers-reduced-motion)
-   - Variables CSS centralizadas (tema / color accent)
-   - Estilos utilitarios usados por la app (glass, focus-visible, sr-only)
+/* ========= globals.css (optimizado para máxima fluidez) =========
+   Optimizaciones clave:
+   - GPU acceleration con transform: translate3d(0,0,0)
+   - will-change estratégico para modales y animaciones
+   - contain CSS para aislar re-renders
+   - Smooth scrolling optimizado
    ============================================ */
 
-/* Tailwind layers (asegúrate de que tailwind esté configurado) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 /* Ocultar cursor nativo en dispositivos no táctiles */
 @media (pointer: fine) {
@@ -20,9 +17,7 @@
   }
 }
 
-/* -------------------------
-   Variables globales (tema)
-   ------------------------- */
+/* Variables globales (tema) */
 :root{
   --color-bg: #000000;
   --color-bg-2: #08080b;
@@ -32,12 +27,10 @@
   --color-accent-600: #9dd200;
   --container-max-width: 1200px;
 
-  /* tipografía */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
 }
 
-/* Dark/light auto adjustments */
 @media (prefers-color-scheme: light) {
   :root{
     --color-bg: #ffffff;
@@ -47,17 +40,24 @@
   }
 }
 
-/* -------------------------
-   Base reset accesible
-   ------------------------- */
+/* Base reset accesible */
 *,
 *::before,
 *::after{
   box-sizing: border-box;
 }
 
-/* Prevent layout shifts from images/embeds:
-   set a sensible default intrinsic size. Adjust in specific components when needed. */
+/* 🚀 OPTIMIZACIÓN GPU: Forzar aceleración de hardware en elementos animados */
+.gpu-accelerated,
+[data-animate],
+.modal,
+.admin-panel-modal,
+.photo-modal {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
 img,
 video,
 canvas,
@@ -69,13 +69,11 @@ object{
   height: auto;
   line-height: 0;
   border-style: none;
-  /* permite que el navegador omita el render de elementos fuera de viewport */
   content-visibility: auto;
   contain-intrinsic-size: 200px 120px;
   -webkit-user-drag: none;
 }
 
-/* Use font-smoothing and legible defaults */
 html, body {
   height: 100%;
   background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-2) 100%);
@@ -85,28 +83,33 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
-  -moz-font-feature-settings: "liga" 1;
   -webkit-tap-highlight-color: transparent;
-  -webkit-font-smoothing: antialiased;
+  /* 🚀 Smooth scrolling optimizado */
+  scroll-behavior: smooth;
 }
 
-/* Root-level accessibility improvements */
+/* 🚀 CRÍTICO: Prevenir scroll en body cuando hay modales */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;
 }
+
 button {
   font-family: inherit;
   -webkit-font-smoothing: antialiased;
 }
 
-/* -------------------------
-   Focus & Accessibility
-   ------------------------- */
-/* Use :focus-visible to avoid focus styles on mouse clicks */
+/* Focus & Accessibility */
 :focus {
   outline: none;
 }
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-accent) 65%, transparent);
   outline-offset: 3px;
@@ -114,7 +117,6 @@ button {
   box-shadow: 0 4px 24px rgba(183,255,0,0.08);
 }
 
-/* Screen-reader only */
 .sr-only {
   position: absolute !important;
   width: 1px !important;
@@ -127,26 +129,23 @@ button {
   border: 0 !important;
 }
 
-/* -------------------------
-   Utility / Component styles
-   ------------------------- */
-
-/* "Glass" panels (used in the UI) */
+/* "Glass" panels - OPTIMIZADO */
 .glass {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.04);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  /* 🚀 Aislar re-paints */
+  contain: layout style paint;
+  transform: translate3d(0, 0, 0);
 }
 
-/* Accent glass hover variant */
 .glass-accent {
   background: linear-gradient(180deg, rgba(183,255,0,0.03), rgba(183,255,0,0.01));
   border-color: rgba(183,255,0,0.08);
 }
 
-/* Buttons primary (fallback if not using component styles) */
 .btn-primary {
   background: var(--color-accent);
   color: black;
@@ -158,25 +157,28 @@ button {
   justify-content: center;
   gap: 0.5rem;
   transition: transform 160ms ease, box-shadow 180ms ease;
+  /* 🚀 GPU acceleration */
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
+
 .btn-primary:hover {
-  transform: translateY(-2px);
+  transform: translate3d(0, -2px, 0);
   box-shadow: 0 12px 30px rgba(183,255,0,0.12);
 }
 
-/* Card skeleton (fast placeholder) */
 .skeleton {
   background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.035), rgba(255,255,255,0.02));
   border-radius: 8px;
   min-height: 80px;
   animation: skeleton-shimmer 1.4s linear infinite;
 }
+
 @keyframes skeleton-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
-/* Container */
 .container {
   max-width: var(--container-max-width);
   margin-left: auto;
@@ -185,22 +187,21 @@ button {
   padding-right: 1rem;
 }
 
-/* Utility to avoid expensive 'will-change' misuse:
-   only use will-change on small transient elements */
-.will-change-transform {
-  will-change: transform;
+/* 🚀 OPTIMIZACIÓN: will-change solo para modales activos */
+.modal-active {
+  will-change: transform, opacity;
 }
 
-/* Reduce heavy box-shadows on mobile */
+/* Reducir efectos pesados en móvil */
 @media (max-width: 768px) {
   .btn-primary { box-shadow: none; }
-  .glass { backdrop-filter: blur(4px); }
+  .glass { 
+    backdrop-filter: blur(4px); 
+    -webkit-backdrop-filter: blur(4px);
+  }
 }
 
-/* -------------------------
-   Performance & Motion
-   ------------------------- */
-/* Respect users who prefer reduced motion */
+/* Respetar preferencias de movimiento reducido */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -210,21 +211,35 @@ button {
   }
 }
 
-/* Throttle heavy transforms on low-resolution devices */
 @media (pointer: coarse) and (max-width: 900px) {
   .no-3d { transform: none !important; }
 }
 
-/* Prevent layout jank on modals by providing intrinsic size */
-.admin-panel-modal, .modal {
+/* 🚀 CRÍTICO: Optimizar modales para máximo rendimiento */
+.admin-panel-modal, .modal, .photo-modal {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Aislar completamente el modal del resto de la página */
+  contain: layout style paint;
+  /* Forzar nueva capa de composición */
+  will-change: opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  /* Prevenir scroll subyacente */
+  overscroll-behavior: contain;
 }
 
-/* -------------------------
-   Forms & Inputs
-   ------------------------- */
+/* Contenido interno del modal */
+.modal > div,
+.admin-panel-modal > div,
+.photo-modal > div {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  contain: layout style paint;
+}
+
+/* Forms & Inputs */
 input, textarea, select {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.04);
@@ -233,43 +248,46 @@ input, textarea, select {
   border-radius: 10px;
   transition: border-color 150ms ease, box-shadow 160ms ease;
 }
+
 input:focus, textarea:focus, select:focus {
   border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
   box-shadow: 0 8px 24px rgba(183,255,0,0.06);
   outline: none;
 }
 
-/* Textarea autosize helper (if JS not present) */
-textarea { min-height: 80px; resize: vertical; }
+textarea { 
+  min-height: 80px; 
+  resize: vertical; 
+}
 
-/* -------------------------
-   Small accessibility fixes
-   ------------------------- */
 [role="button"], button {
   cursor: pointer;
 }
 
-/* Provide better contrast for outline when using dark backgrounds */
 :focus-visible {
   outline-color: var(--color-accent);
 }
 
-/* -------------------------
-   Helpful developer helpers
-   ------------------------- */
-/* Keep images and media from being accidentally draggable */
 img, svg, video {
   user-select: none;
   -webkit-user-drag: none;
 }
 
-/* Prevent large background patterns from rendering offscreen repeatedly */
 .bg-pattern {
   background-repeat: no-repeat;
   background-attachment: scroll;
   background-size: cover;
 }
 
-/* -------------------------
-   End of globals.css
-   ------------------------- */
+/* 🚀 NUEVO: Optimizar animaciones de Framer Motion */
+[data-framer-motion] {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* 🚀 NUEVO: Tabs optimizados */
+[role="tab"],
+[role="tabpanel"] {
+  contain: layout style;
+  transform: translate3d(0, 0, 0);
+}

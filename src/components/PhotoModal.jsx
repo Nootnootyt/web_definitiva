@@ -13,11 +13,9 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
   const imageRef = useRef(null);
   const modalRef = useRef(null);
   
-  // Variables para pinch zoom
   const [initialDistance, setInitialDistance] = useState(0);
   const [initialZoom, setInitialZoom] = useState(1);
 
-  // Detectar dispositivo táctil
   useEffect(() => {
     const checkTouch = () => {
       return (
@@ -29,31 +27,22 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
     setIsTouchDevice(checkTouch());
   }, []);
 
-  // Reset automático cuando el zoom vuelve a 1
   useEffect(() => {
     if (zoomLevel === 1) {
       setPosition({ x: 0, y: 0 });
     }
   }, [zoomLevel]);
 
-  // ✅ CRÍTICO: Bloquear scroll de la página cuando el modal está abierto
+  // 🚀 OPTIMIZACIÓN: Bloquear scroll con clase en body
   useEffect(() => {
     if (isOpen) {
-      // Guardar posición actual del scroll
       const scrollY = window.scrollY;
-      
-      // Bloquear scroll
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
+      document.body.classList.add('modal-open');
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
       
       return () => {
-        // Restaurar scroll
-        document.body.style.overflow = '';
-        document.body.style.position = '';
+        document.body.classList.remove('modal-open');
         document.body.style.top = '';
-        document.body.style.width = '';
         window.scrollTo(0, scrollY);
       };
     }
@@ -61,7 +50,6 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
 
   if (!isOpen || !photo) return null;
 
-  // Calcular distancia entre dos puntos táctiles
   const getTouchDistance = (touches) => {
     const touch1 = touches[0];
     const touch2 = touches[1];
@@ -70,7 +58,6 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  // Funciones de zoom con stopPropagation
   const handleZoomIn = (e) => {
     e.stopPropagation();
     setZoomLevel(prev => Math.min(prev + 0.5, 3));
@@ -88,9 +75,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
     setPosition({ x: 0, y: 0 });
   };
 
-  // ✅ Zoom con rueda del ratón - MEJORADO para no pasar al fondo
   const handleWheel = (e) => {
-    // CRÍTICO: Prevenir TODOS los comportamientos por defecto
     e.preventDefault();
     e.stopPropagation();
     
@@ -99,7 +84,6 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
     setZoomLevel(newZoom);
   };
 
-  // Drag con ratón
   const handleMouseDown = (e) => {
     e.stopPropagation();
     if (zoomLevel > 1) {
@@ -124,17 +108,14 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
     setIsDragging(false);
   };
 
-  // ✅ PINCH ZOOM para iPad/iPhone/Tablets
   const handleTouchStart = (e) => {
     e.stopPropagation();
     
     if (e.touches.length === 2) {
-      // Pinch zoom iniciado
       const distance = getTouchDistance(e.touches);
       setInitialDistance(distance);
       setInitialZoom(zoomLevel);
     } else if (e.touches.length === 1 && zoomLevel > 1) {
-      // Drag con un dedo (solo si hay zoom)
       setIsDragging(true);
       setDragStart({
         x: e.touches[0].clientX - position.x,
@@ -144,17 +125,15 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
   };
 
   const handleTouchMove = (e) => {
-    e.preventDefault(); // ✅ Evitar zoom de página
+    e.preventDefault();
     e.stopPropagation();
     
     if (e.touches.length === 2) {
-      // Pinch zoom en progreso
       const distance = getTouchDistance(e.touches);
       const scale = distance / initialDistance;
       const newZoom = Math.min(Math.max(initialZoom * scale, 1), 3);
       setZoomLevel(newZoom);
     } else if (isDragging && e.touches.length === 1 && zoomLevel > 1) {
-      // Drag con un dedo
       setPosition({
         x: e.touches[0].clientX - dragStart.x,
         y: e.touches[0].clientY - dragStart.y
@@ -174,9 +153,13 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="photo-modal fixed inset-0 z-[9998] bg-black/95 backdrop-blur-sm overflow-hidden"
+        transition={{ duration: 0.2, ease: 'easeOut' }} // 🚀 Transición más rápida
+        className="photo-modal modal-active fixed inset-0 z-[9998] bg-black/95 backdrop-blur-sm overflow-hidden"
         onClick={onClose}
-        style={{ touchAction: 'none' }}
+        style={{ 
+          touchAction: 'none',
+          willChange: 'opacity' // 🚀 Hint para GPU
+        }}
       >
         {/* Botón cerrar */}
         <button
@@ -184,7 +167,8 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
             e.stopPropagation();
             onClose();
           }}
-          className="cursor-pointer fixed top-4 right-4 md:top-6 md:right-6 z-[9999] w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-300 flex items-center justify-center backdrop-blur-sm border-2 border-[var(--color-accent)]/30 hover:border-[var(--color-accent)] shadow-xl"
+          className="cursor-pointer fixed top-4 right-4 md:top-6 md:right-6 z-[9999] w-12 h-12 md:w-14 md:h-14 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-colors flex items-center justify-center shadow-2xl"
+          style={{ willChange: 'transform' }} // 🚀 GPU hint
         >
           <FaTimes size={20} className="md:text-2xl" />
         </button>
@@ -194,24 +178,27 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
           <button
             onClick={handleZoomIn}
             disabled={zoomLevel >= 3}
-            className="cursor-pointer w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm border-2 border-[var(--color-accent)]/30 hover:border-[var(--color-accent)] shadow-xl"
+            className="cursor-pointer w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-30"
             title="Aumentar zoom"
+            style={{ willChange: 'transform' }}
           >
             <FaSearchPlus size={16} className="md:text-lg" />
           </button>
           <button
             onClick={handleZoomOut}
             disabled={zoomLevel <= 1}
-            className="cursor-pointer w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm border-2 border-[var(--color-accent)]/30 hover:border-[var(--color-accent)] shadow-xl"
+            className="cursor-pointer w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-30"
             title="Reducir zoom"
+            style={{ willChange: 'transform' }}
           >
             <FaSearchMinus size={16} className="md:text-lg" />
           </button>
           <button
             onClick={handleResetZoom}
             disabled={zoomLevel === 1}
-            className="cursor-pointer w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-300 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm border-2 border-[var(--color-accent)]/30 hover:border-[var(--color-accent)] shadow-xl"
+            className="cursor-pointer w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#0A0F1C]/90 hover:bg-[var(--color-accent)] text-white hover:text-black transition-all duration-200 flex items-center justify-center shadow-lg disabled:opacity-30"
             title="Restablecer zoom"
+            style={{ willChange: 'transform' }}
           >
             <FaExpand size={14} className="md:text-base" />
           </button>
@@ -219,7 +206,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
 
         {/* Indicador de zoom */}
         {zoomLevel > 1 && (
-          <div className="fixed bottom-4 left-4 md:bottom-6 md:left-6 z-[9999] px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-[#0A0F1C]/90 text-white text-xs md:text-sm font-bold backdrop-blur-sm border-2 border-[var(--color-accent)]/50 shadow-xl">
+          <div className="fixed bottom-4 left-4 md:bottom-6 md:left-6 z-[9999] px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-[#0A0F1C]/90 text-white text-xs md:text-sm font-bold backdrop-blur-sm border border-[var(--color-accent)]/30">
             {Math.round(zoomLevel * 100)}%
           </div>
         )}
@@ -228,16 +215,21 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ type: "spring", duration: 0.5 }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 300, // 🚀 Spring más rápido
+            damping: 30,
+            duration: 0.3
+          }}
           className="relative w-full h-full flex items-center justify-center p-4 md:p-6"
           onClick={(e) => e.stopPropagation()}
+          style={{ willChange: 'transform, opacity' }} // 🚀 GPU hint
         >
-          {/* ✅ Grid con imagen más ancha - Cambio de 1.5fr a 2fr */}
           <div className="flex flex-col lg:grid lg:grid-cols-[2fr,auto] gap-4 lg:gap-6 w-full h-full max-w-[1800px]">
             
-            {/* ✅ IMAGEN - Con el mismo estilo del contenedor de texto y más ancha */}
+            {/* IMAGEN */}
             <div 
-              className="relative flex items-center justify-center overflow-hidden h-[65vh] lg:h-full rounded-2xl select-none bg-[#0A0F1C]/95 backdrop-blur-md border-2 border-[var(--color-accent)]/20 shadow-2xl p-4"
+              className="relative flex items-center justify-center overflow-hidden h-[65vh] lg:h-full rounded-2xl select-none bg-[#0A0F1C]/95 backdrop-blur-md border-2 border-[var(--color-accent)]/20 shadow-2xl"
               onWheel={handleWheel}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -248,7 +240,9 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
               onTouchEnd={handleTouchEnd}
               style={{ 
                 cursor: zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
-                touchAction: 'none'
+                touchAction: 'none',
+                contain: 'layout style paint', // 🚀 Aislar re-renders
+                willChange: zoomLevel > 1 ? 'transform' : 'auto' // 🚀 Hint condicional
               }}
             >
               <motion.div
@@ -258,8 +252,13 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
                   x: position.x,
                   y: position.y
                 }}
-                transition={{ type: "spring", stiffness: 200, damping: 30 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 250, // 🚀 Más responsive
+                  damping: 25
+                }}
                 className="relative w-full h-full"
+                style={{ willChange: 'transform' }} // 🚀 GPU
               >
                 <Image
                   src={photo.image}
@@ -267,7 +266,7 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
                   fill
                   className="object-contain pointer-events-none rounded-xl"
                   priority
-                  quality={100}
+                  quality={90} // 🚀 Reducir calidad ligeramente para mejor performance
                   unoptimized
                   draggable={false}
                   sizes="(max-width: 1024px) 100vw, 60vw"
@@ -298,10 +297,15 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
               )}
             </div>
 
-            {/* ✅ INFORMACIÓN - Más compacta y centrada */}
-            <div className="flex flex-col justify-center space-y-4 overflow-y-auto p-6 lg:p-8 bg-[#0A0F1C]/95 rounded-2xl backdrop-blur-md border-2 border-[var(--color-accent)]/20 shadow-2xl lg:w-[420px] lg:max-w-[420px]">
+            {/* INFORMACIÓN */}
+            <div 
+              className="flex flex-col justify-center space-y-4 overflow-y-auto p-6 lg:p-8 bg-[#0A0F1C]/95 rounded-2xl backdrop-blur-md border-2 border-[var(--color-accent)]/20 shadow-2xl lg:w-[400px] xl:w-[450px]"
+              style={{ 
+                contain: 'layout style', // 🚀 Aislar del resto
+                overscrollBehavior: 'contain'
+              }}
+            >
               
-              {/* Categoría y título - Más compactos */}
               <div className="space-y-3">
                 <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-[var(--color-accent)]/20 text-[var(--color-accent)] border border-[var(--color-accent)]/30">
                   {photo.category}
@@ -314,7 +318,6 @@ export default function PhotoModal({ photo, isOpen, onClose }) {
                 </p>
               </div>
 
-              {/* Metadatos - Diseño compacto y estilizado */}
               <div className="space-y-3 pt-4 border-t border-[var(--color-accent)]/20">
                 
                 {/* Autor */}

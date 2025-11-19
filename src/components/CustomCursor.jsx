@@ -13,11 +13,11 @@ export default function CustomCursor() {
   const cursorX = useMotionValue(0);
   const cursorY = useMotionValue(0);
   
-  // Spring configuración - MÁS RÁPIDO Y LIGERO
+  // ✅ Spring configuración - OPTIMIZADO para mejor performance
   const springConfig = { 
-    damping: 20,
-    stiffness: 500,
-    mass: 0.3,
+    damping: 25,
+    stiffness: 400,
+    mass: 0.5,
   };
   
   const smoothX = useSpring(cursorX, springConfig);
@@ -59,9 +59,9 @@ export default function CustomCursor() {
       
       setVelocity(speed);
 
-      // Crear trail particles cuando hay movimiento rápido
+      // ✅ Reducir trails para mejor performance
       if (speed > 20) {
-        setTrails(prev => [...prev.slice(-8), {
+        setTrails(prev => [...prev.slice(-5), {
           id: Date.now(),
           x: e.clientX,
           y: e.clientY,
@@ -163,7 +163,7 @@ export default function CustomCursor() {
 
       {/* ======= PUNTO CENTRAL MAGNÉTICO ======= */}
       <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9999]"
+        className="fixed top-0 left-0 pointer-events-none z-[10001]" // ✅ Z-index más alto que los modales
         style={{
           x: cursorX,
           y: cursorY,
@@ -212,7 +212,7 @@ export default function CustomCursor() {
 
       {/* ======= ANILLO EXTERIOR ======= */}
       <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9998]"
+        className="fixed top-0 left-0 pointer-events-none z-[10000]" // ✅ Z-index más alto que los modales
         style={{
           x: smoothX,
           y: smoothY,
@@ -404,7 +404,8 @@ export default function CustomCursor() {
         </motion.div>
       )}
 
-      {velocity > 25 && (
+      {/* ✅ Efecto de velocidad reducido para mejor performance */}
+      {velocity > 30 && (
         <motion.div
           className="fixed top-0 left-0 pointer-events-none z-[9997]"
           style={{
@@ -414,20 +415,20 @@ export default function CustomCursor() {
             translateY: '-50%',
           }}
           initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 0.3, scale: 2 }}
-          exit={{ opacity: 0, scale: 3 }}
+          animate={{ opacity: 0.2, scale: 1.5 }}
+          exit={{ opacity: 0, scale: 2 }}
           transition={{ 
-            duration: 0.6,
+            duration: 0.4,
             ease: "easeOut"
           }}
         >
           <div
             className="rounded-full"
             style={{
-              width: '80px',
-              height: '80px',
+              width: '60px',
+              height: '60px',
               background: `radial-gradient(circle, var(--color-accent) 0%, transparent 70%)`,
-              filter: 'blur(20px)',
+              filter: 'blur(15px)',
             }}
           />
         </motion.div>
@@ -435,7 +436,7 @@ export default function CustomCursor() {
 
       {isHoveringImage && (
         <motion.div
-          className="fixed pointer-events-none z-[9999]"
+          className="fixed pointer-events-none z-[10001]" // ✅ Z-index más alto
           style={{
             x: cursorX,
             y: cursorY,
