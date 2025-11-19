@@ -11,17 +11,30 @@ export default function ProductCard({ product, isAdmin, onEdit, onDelete }) {
   const [showModal, setShowModal] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e.stopPropagation(); // ✅ Evitar abrir modal al añadir al carrito
     addItem(product);
     toast.success(`${product.name} añadido al carrito`);
   };
 
+  const handleEdit = (e) => {
+    e.stopPropagation(); // ✅ Evitar abrir modal
+    onEdit(product);
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation(); // ✅ Evitar abrir modal
+    onDelete(product);
+  };
+
   return (
     <>
+      {/* ✅ Toda la tarjeta es clickable */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="group relative glass rounded-2xl overflow-hidden hover:glass-accent transition-all duration-300"
+        onClick={() => setShowModal(true)} // ✅ Click en cualquier parte abre modal
+        className="cursor-pointer group relative glass rounded-2xl overflow-hidden hover:glass-accent transition-all duration-300"
       >
         {/* Botones de admin (esquina superior derecha) */}
         {isAdmin && (
@@ -29,7 +42,7 @@ export default function ProductCard({ product, isAdmin, onEdit, onDelete }) {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => onEdit(product)}
+              onClick={handleEdit}
               className="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center shadow-lg transition-colors"
             >
               <FaEdit />
@@ -37,7 +50,7 @@ export default function ProductCard({ product, isAdmin, onEdit, onDelete }) {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => onDelete(product)}
+              onClick={handleDelete}
               className="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-colors"
             >
               <FaTrash />
@@ -56,6 +69,13 @@ export default function ProductCard({ product, isAdmin, onEdit, onDelete }) {
             unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          
+          {/* ✅ Indicador visual de que es clickable */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="w-16 h-16 rounded-full bg-[var(--color-accent)]/90 flex items-center justify-center backdrop-blur-sm">
+              <FaInfoCircle className="text-2xl text-black" />
+            </div>
+          </div>
         </div>
 
         {/* Info */}
@@ -79,26 +99,17 @@ export default function ProductCard({ product, isAdmin, onEdit, onDelete }) {
             </span>
           )}
 
-          {/* Botones de acción */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddToCart}
-              className="flex-1 px-4 py-3 bg-[var(--color-accent)] text-black font-bold rounded-xl hover:bg-white transition-colors flex items-center justify-center gap-2"
-            >
-              <FaShoppingCart />
-              <span>Añadir</span>
-            </button>
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-4 py-3 glass-accent rounded-xl text-white hover:bg-white/20 transition-colors flex items-center justify-center"
-            >
-              <FaInfoCircle />
-            </button>
-          </div>
+          {/* ✅ Solo botón de añadir al carrito (más grande y prominente) */}
+          <button
+            onClick={handleAddToCart}
+            className="w-full px-4 py-3 bg-[var(--color-accent)] text-black font-bold rounded-xl hover:bg-white transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+          >
+            <FaShoppingCart />
+            <span>Añadir al Carrito</span>
+          </button>
         </div>
       </motion.div>
 
-      {/* ✅ CORREGIDO: Pasar prop isOpen */}
       <ProductModal
         product={product}
         isOpen={showModal}
