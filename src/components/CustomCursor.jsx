@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 export default function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false);
@@ -8,54 +8,51 @@ export default function CustomCursor() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
   
-  // Motion values para el cursor
-  const cursorX = useMotionValue(-100); // Iniciar fuera de pantalla
+  // Posición del ratón
+  const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
   
-  // Configuración de física: Más tensa para mayor precisión (Estilo OS)
-  // Menos 'mass' y más 'stiffness' eliminan la sensación de "lag" o borrachera
+  // Configuración de física "Liquid": 
+  // Un poco más de 'damping' y 'mass' para que se sienta como un objeto de cristal sólido
   const springConfig = { 
-    damping: 40,
-    stiffness: 600, 
-    mass: 0.1,
+    damping: 30,
+    stiffness: 400, 
+    mass: 0.15, 
   };
   
   const smoothX = useSpring(cursorX, springConfig);
   const smoothY = useSpring(cursorY, springConfig);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Rotación dinámica basada en el movimiento (efecto inercia sutil)
+  const velocityX = useMotionValue(0);
+  const rotateX = useTransform(velocityX, [-1000, 1000], [-15, 15]);
 
   useEffect(() => {
-    const checkTouchDevice = () => {
-      return (
-        'ontouchstart' in window ||
-        navigator.maxTouchPoints > 0 ||
-        window.matchMedia('(pointer: coarse)').matches
-      );
-    };
-    
-    setIsTouchDevice(checkTouchDevice());
+    setIsMounted(true);
+    const checkTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    setIsTouchDevice(checkTouch());
   }, []);
 
   useEffect(() => {
     if (isTouchDevice) return;
 
+    let lastX = 0;
     const moveCursor = (e) => {
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
+      
+      // Calcular velocidad para inclinar un poco la flecha
+      const vel = e.clientX - lastX;
+      velocityX.set(vel * 10); // Amplificar para el efecto
+      lastX = e.clientX;
     };
 
     const handleMouseDown = () => setIsClicking(true);
     const handleMouseUp = () => setIsClicking(false);
 
     const handleHoverElements = () => {
-      const hoverableElements = document.querySelectorAll(
-        'button, a, input, textarea, [role="button"], .cursor-pointer'
-      );
-
-      hoverableElements.forEach((el) => {
+      const els = document.querySelectorAll('button, a, input, textarea, .cursor-pointer');
+      els.forEach(el => {
         el.addEventListener('mouseenter', () => setIsHovering(true));
         el.addEventListener('mouseleave', () => setIsHovering(false));
       });
@@ -64,10 +61,11 @@ export default function CustomCursor() {
     window.addEventListener('mousemove', moveCursor);
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mouseup', handleMouseUp);
-    handleHoverElements();
-
+    
+    // Observer para detectar nuevos elementos interactivos
     const observer = new MutationObserver(handleHoverElements);
     observer.observe(document.body, { childList: true, subtree: true });
+    handleHoverElements();
 
     return () => {
       window.removeEventListener('mousemove', moveCursor);
@@ -75,9 +73,13 @@ export default function CustomCursor() {
       window.removeEventListener('mouseup', handleMouseUp);
       observer.disconnect();
     };
-  }, [isTouchDevice, cursorX, cursorY]);
+  }, [isTouchDevice, cursorX, cursorY, velocityX]);
 
   if (!isMounted || isTouchDevice) return null;
+
+  // Definimos la forma de la flecha (Path SVG) una vez para reusarla en el clip-path y el borde
+  // Es una flecha más "gordita" y redondeada estilo Apple
+  const arrowPath = "M6.5 2C8.5 0.5 11.5 0.5 13.5 2L28 13.5C30.5 15.5 30.5 19.5 28 21.5L18 29.5L15 38C14 41 10 41 9 38L2 13.5C1.5 11.5 2.5 9.5 4 8.5L6.5 2Z";
 
   return (
     <motion.div
@@ -85,52 +87,79 @@ export default function CustomCursor() {
       style={{
         x: smoothX,
         y: smoothY,
-        // No centramos (-50%) para que la punta de la flecha sea el punto de click exacto
+        rotate: rotateX, // Inercia sutil
+        filter: "drop-shadow(0px 10px 15px rgba(0,0,0,0.2))" // Sombra externa profunda
       }}
     >
       <motion.div
         animate={{
-          scale: isClicking ? 0.9 : isHovering ? 1.1 : 1,
-          rotate: isClicking ? -10 : 0, // Pequeña rotación al hacer click (feedback)
+          scale: isClicking ? 0.85 : isHovering ? 1.1 : 1,
         }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="relative"
+        className="relative w-12 h-12" // Tamaño GRANDE (48px)
       >
-        {/* ESTÉTICA LIQUID GLASS / CRISTAL LÍQUIDO 
-          SVG de flecha personalizada.
+        {/* CAPA 1: EL CRISTAL (Blur + Color) 
+            Usamos clip-path para recortar el div con backdrop-filter
+        */}
+        <div 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            // La magia del cristal:
+            backdropFilter: 'blur(8px) brightness(1.1)', 
+            WebkitBackdropFilter: 'blur(8px) brightness(1.1)',
+            backgroundColor: 'rgba(183, 255, 0, 0.25)', // Tu verde característico (#b7ff00) con transparencia
+            clipPath: `path('${arrowPath}')`,
+          }}
+        />
+
+        {/* CAPA 2: EL BRILLO Y BORDE (SVG Overlay)
+            Esto añade el borde blanco, el brillo especular y la definición
         */}
         <svg
-          width="32"
-          height="32"
-          viewBox="0 0 24 24"
+          width="100%"
+          height="100%"
+          viewBox="0 0 36 46" // Ajustado para que la flecha quepa bien
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          // Sombra para dar profundidad 3D y separarlo del fondo
-          className="drop-shadow-xl"
-          style={{ filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.3))' }}
+          style={{ position: 'absolute', inset: 0, overflow: 'visible' }}
         >
+          {/* Borde interior brillante para efecto 3D */}
           <path
-            d="M3.5 3.5L10.5 20.5L13.5 13.5L20.5 10.5L3.5 3.5Z"
-            // Relleno: Tu color verde accent (#b7ff00) pero semitransparente
-            fill="rgba(183, 255, 0, 0.35)" 
-            stroke="rgba(255, 255, 255, 0.8)" // Borde blanco casi opaco para efecto cristal
+            d={arrowPath}
+            stroke="rgba(255, 255, 255, 0.9)"
             strokeWidth="1.5"
-            strokeLinejoin="round"
+            fill="url(#glassGradient)" // Relleno degradado sutil
           />
-          {/* Brillo interno (simulación de reflejo de cristal) */}
-          <path
-            d="M5 6L9 16L11 11L16 9L5 6Z"
-            fill="rgba(255, 255, 255, 0.1)"
-          />
+          
+          {/* Definición de degradados para el brillo "Liquid" */}
+          <defs>
+            <linearGradient id="glassGradient" x1="0" y1="0" x2="36" y2="46" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+              <stop offset="40%" stopColor="white" stopOpacity="0.1" />
+              <stop offset="100%" stopColor="rgba(183, 255, 0, 0.1)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
         </svg>
 
-        {/* Efecto de desenfoque (Backdrop Blur) dentro de la flecha 
-            Nota: backdrop-filter en SVG es complejo, usamos un div detrás con la misma forma 
-            o confiamos en la transparencia del SVG para simularlo. 
-            Para un efecto de cristal real en CSS dentro de una forma SVG compleja, 
-            la transparencia + borde blanco + sombra suele ser más performante y visualmente similar.
+        {/* CAPA 3: BRILLO "GLOSS" SUPERIOR 
+            Un pequeño óvalo blanco en la parte superior para simular reflejo de luz
         */}
-        
+        <div 
+          style={{
+            position: 'absolute',
+            top: '5px',
+            left: '8px',
+            width: '14px',
+            height: '20px',
+            borderRadius: '50%',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%)',
+            transform: 'rotate(-15deg)',
+            filter: 'blur(2px)',
+            opacity: 0.8,
+            pointerEvents: 'none'
+          }}
+        />
       </motion.div>
     </motion.div>
   );
