@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 
 export default function CustomCursor() {
   const [isHovering, setIsHovering] = useState(false);
@@ -12,20 +12,15 @@ export default function CustomCursor() {
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
   
-  // Configuración de física "Liquid": 
-  // Un poco más de 'damping' y 'mass' para que se sienta como un objeto de cristal sólido
+  // Configuración de física "Liquid Glass": suave y fluido
   const springConfig = { 
-    damping: 30,
-    stiffness: 400, 
-    mass: 0.15, 
+    damping: 25,
+    stiffness: 350, 
+    mass: 0.2, 
   };
   
   const smoothX = useSpring(cursorX, springConfig);
   const smoothY = useSpring(cursorY, springConfig);
-
-  // Rotación dinámica basada en el movimiento (efecto inercia sutil)
-  const velocityX = useMotionValue(0);
-  const rotateX = useTransform(velocityX, [-1000, 1000], [-15, 15]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,15 +31,9 @@ export default function CustomCursor() {
   useEffect(() => {
     if (isTouchDevice) return;
 
-    let lastX = 0;
     const moveCursor = (e) => {
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
-      
-      // Calcular velocidad para inclinar un poco la flecha
-      const vel = e.clientX - lastX;
-      velocityX.set(vel * 10); // Amplificar para el efecto
-      lastX = e.clientX;
     };
 
     const handleMouseDown = () => setIsClicking(true);
@@ -73,13 +62,9 @@ export default function CustomCursor() {
       window.removeEventListener('mouseup', handleMouseUp);
       observer.disconnect();
     };
-  }, [isTouchDevice, cursorX, cursorY, velocityX]);
+  }, [isTouchDevice, cursorX, cursorY]);
 
   if (!isMounted || isTouchDevice) return null;
-
-  // Definimos la forma de la flecha (Path SVG) una vez para reusarla en el clip-path y el borde
-  // Es una flecha más "gordita" y redondeada estilo Apple
-  const arrowPath = "M6.5 2C8.5 0.5 11.5 0.5 13.5 2L28 13.5C30.5 15.5 30.5 19.5 28 21.5L18 29.5L15 38C14 41 10 41 9 38L2 13.5C1.5 11.5 2.5 9.5 4 8.5L6.5 2Z";
 
   return (
     <motion.div
@@ -87,77 +72,196 @@ export default function CustomCursor() {
       style={{
         x: smoothX,
         y: smoothY,
-        rotate: rotateX, // Inercia sutil
-        filter: "drop-shadow(0px 10px 15px rgba(0,0,0,0.2))" // Sombra externa profunda
+        translateX: '-20%',
+        translateY: '-15%',
       }}
     >
       <motion.div
         animate={{
-          scale: isClicking ? 0.85 : isHovering ? 1.1 : 1,
+          scale: isClicking ? 0.88 : isHovering ? 1.15 : 1,
         }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="relative w-12 h-12" // Tamaño GRANDE (48px)
+        transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+        className="relative"
+        style={{
+          width: '56px',
+          height: '68px',
+          filter: 'drop-shadow(0px 12px 24px rgba(0, 0, 0, 0.25)) drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.15))',
+        }}
       >
-        {/* CAPA 1: EL CRISTAL (Blur + Color) 
-            Usamos clip-path para recortar el div con backdrop-filter
-        */}
-        <div 
-          style={{
-            position: 'absolute',
-            inset: 0,
-            // La magia del cristal:
-            backdropFilter: 'blur(8px) brightness(1.1)', 
-            WebkitBackdropFilter: 'blur(8px) brightness(1.1)',
-            backgroundColor: 'rgba(183, 255, 0, 0.25)', // Tu verde característico (#b7ff00) con transparencia
-            clipPath: `path('${arrowPath}')`,
-          }}
-        />
-
-        {/* CAPA 2: EL BRILLO Y BORDE (SVG Overlay)
-            Esto añade el borde blanco, el brillo especular y la definición
-        */}
+        {/* SVG Container con forma de flecha */}
         <svg
           width="100%"
           height="100%"
-          viewBox="0 0 36 46" // Ajustado para que la flecha quepa bien
+          viewBox="0 0 56 68"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ position: 'absolute', inset: 0, overflow: 'visible' }}
+          style={{ position: 'absolute', inset: 0 }}
         >
-          {/* Borde interior brillante para efecto 3D */}
-          <path
-            d={arrowPath}
-            stroke="rgba(255, 255, 255, 0.9)"
-            strokeWidth="1.5"
-            fill="url(#glassGradient)" // Relleno degradado sutil
+          <defs>
+            {/* Gradiente principal del cristal verde */}
+            <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="rgba(183, 255, 0, 0.45)" />
+              <stop offset="50%" stopColor="rgba(183, 255, 0, 0.28)" />
+              <stop offset="100%" stopColor="rgba(183, 255, 0, 0.35)" />
+            </linearGradient>
+
+            {/* Gradiente para el brillo superior (highlight) */}
+            <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor="rgba(255, 255, 255, 0.85)" />
+              <stop offset="60%" stopColor="rgba(255, 255, 255, 0.4)" />
+              <stop offset="100%" stopColor="rgba(255, 255, 255, 0)" />
+            </linearGradient>
+
+            {/* Gradiente para el reflejo tipo iOS (iridiscencia sutil) */}
+            <radialGradient id="iridescent" cx="30%" cy="30%">
+              <stop offset="0%" stopColor="rgba(255, 255, 255, 0.6)" />
+              <stop offset="40%" stopColor="rgba(200, 255, 150, 0.3)" />
+              <stop offset="80%" stopColor="rgba(183, 255, 0, 0.15)" />
+              <stop offset="100%" stopColor="rgba(183, 255, 0, 0)" />
+            </radialGradient>
+
+            {/* Filtro blur para el efecto de refracción */}
+            <filter id="glassBlur">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="0.8" />
+            </filter>
+
+            {/* Máscara para la forma de la flecha con bordes redondeados */}
+            <clipPath id="arrowClip">
+              <path d="M 8 4 
+                       C 6 2, 4 2, 3 4
+                       L 3 42
+                       L 14 53
+                       C 15 54, 16 54, 17 53
+                       L 19 48
+                       L 26 48
+                       C 28 48, 29 46, 28 44
+                       L 20 28
+                       L 48 12
+                       C 51 10, 52 6, 49 4
+                       C 47 2, 44 3, 42 5
+                       L 15 24
+                       L 15 8
+                       C 15 6, 13 4, 11 4
+                       L 8 4 Z"
+                     style={{
+                       strokeLinejoin: 'round',
+                     }}
+              />
+            </clipPath>
+          </defs>
+
+          {/* Capa de fondo del cristal con gradiente verde */}
+          <g clipPath="url(#arrowClip)">
+            {/* Base del cristal */}
+            <rect 
+              width="100%" 
+              height="100%" 
+              fill="url(#glassGradient)"
+            />
+            
+            {/* Capa de iridiscencia */}
+            <rect 
+              width="100%" 
+              height="100%" 
+              fill="url(#iridescent)"
+              opacity="0.7"
+            />
+          </g>
+
+          {/* Borde del cristal con efecto brillante */}
+          <path 
+            d="M 8 4 
+               C 6 2, 4 2, 3 4
+               L 3 42
+               L 14 53
+               C 15 54, 16 54, 17 53
+               L 19 48
+               L 26 48
+               C 28 48, 29 46, 28 44
+               L 20 28
+               L 48 12
+               C 51 10, 52 6, 49 4
+               C 47 2, 44 3, 42 5
+               L 15 24
+               L 15 8
+               C 15 6, 13 4, 11 4
+               L 8 4 Z"
+            stroke="rgba(255, 255, 255, 0.6)"
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinejoin="round"
+          />
+
+          {/* Brillo interno superior (highlight) */}
+          <path 
+            d="M 8 5 
+               L 8 20
+               L 35 8
+               L 42 6
+               C 44 5, 45 5, 43 6
+               L 15 20
+               L 10 20
+               C 8 20, 7 18, 7 16
+               L 7 7
+               C 7 5, 8 4, 8 5 Z"
+            fill="url(#highlightGradient)"
+            opacity="0.8"
+            filter="url(#glassBlur)"
+          />
+
+          {/* Reflejos adicionales tipo liquid glass */}
+          <ellipse 
+            cx="12" 
+            cy="12" 
+            rx="5" 
+            ry="8" 
+            fill="rgba(255, 255, 255, 0.5)"
+            filter="url(#glassBlur)"
           />
           
-          {/* Definición de degradados para el brillo "Liquid" */}
-          <defs>
-            <linearGradient id="glassGradient" x1="0" y1="0" x2="36" y2="46" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="white" stopOpacity="0.4" />
-              <stop offset="40%" stopColor="white" stopOpacity="0.1" />
-              <stop offset="100%" stopColor="rgba(183, 255, 0, 0.1)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
+          <ellipse 
+            cx="18" 
+            cy="30" 
+            rx="3" 
+            ry="6" 
+            fill="rgba(255, 255, 255, 0.25)"
+            filter="url(#glassBlur)"
+          />
+
+          {/* Borde externo sutil para definición */}
+          <path 
+            d="M 8 4 
+               C 6 2, 4 2, 3 4
+               L 3 42
+               L 14 53
+               C 15 54, 16 54, 17 53
+               L 19 48
+               L 26 48
+               C 28 48, 29 46, 28 44
+               L 20 28
+               L 48 12
+               C 51 10, 52 6, 49 4
+               C 47 2, 44 3, 42 5
+               L 15 24
+               L 15 8
+               C 15 6, 13 4, 11 4
+               L 8 4 Z"
+            stroke="rgba(183, 255, 0, 0.4)"
+            strokeWidth="0.5"
+            fill="none"
+            strokeLinejoin="round"
+          />
         </svg>
 
-        {/* CAPA 3: BRILLO "GLOSS" SUPERIOR 
-            Un pequeño óvalo blanco en la parte superior para simular reflejo de luz
-        */}
-        <div 
+        {/* Capa adicional con backdrop-filter para efecto de cristal real sobre el fondo */}
+        <div
           style={{
             position: 'absolute',
-            top: '5px',
-            left: '8px',
-            width: '14px',
-            height: '20px',
-            borderRadius: '50%',
-            background: 'linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%)',
-            transform: 'rotate(-15deg)',
-            filter: 'blur(2px)',
-            opacity: 0.8,
-            pointerEvents: 'none'
+            inset: 0,
+            backdropFilter: 'blur(12px) saturate(1.3) brightness(1.1)',
+            WebkitBackdropFilter: 'blur(12px) saturate(1.3) brightness(1.1)',
+            clipPath: `path('M 8 4 C 6 2, 4 2, 3 4 L 3 42 L 14 53 C 15 54, 16 54, 17 53 L 19 48 L 26 48 C 28 48, 29 46, 28 44 L 20 28 L 48 12 C 51 10, 52 6, 49 4 C 47 2, 44 3, 42 5 L 15 24 L 15 8 C 15 6, 13 4, 11 4 L 8 4 Z')`,
+            opacity: 0.6,
           }}
         />
       </motion.div>
