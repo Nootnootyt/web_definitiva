@@ -12,6 +12,14 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* Ocultar cursor nativo en dispositivos no táctiles */
+@media (pointer: fine) {
+  body, a, button, input, select, textarea, .cursor-pointer {
+    cursor: none !important;
+  }
+}
+
 /* -------------------------
    Variables globales (tema)
    ------------------------- */

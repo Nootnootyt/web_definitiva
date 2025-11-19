@@ -9,25 +9,20 @@ export default function CustomCursor() {
   const [isClicking, setIsClicking] = useState(false);
   
   // Motion values para el cursor
-  const cursorX = useMotionValue(0);
-  const cursorY = useMotionValue(0);
+  const cursorX = useMotionValue(-100); // Iniciar fuera de pantalla
+  const cursorY = useMotionValue(-100);
   
-  // Spring configuración
+  // Configuración de física: Más tensa para mayor precisión (Estilo OS)
+  // Menos 'mass' y más 'stiffness' eliminan la sensación de "lag" o borrachera
   const springConfig = { 
-    damping: 25,
-    stiffness: 400,
-    mass: 0.2,
+    damping: 40,
+    stiffness: 600, 
+    mass: 0.1,
   };
   
   const smoothX = useSpring(cursorX, springConfig);
   const smoothY = useSpring(cursorY, springConfig);
 
-  // Tracking de velocidad para efectos dinámicos
-  const lastX = useRef(0);
-  const lastY = useRef(0);
-  const [velocity, setVelocity] = useState(0);
-
-  // ✅ CORREGIDO: Moved setIsMounted to separate useEffect
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -48,16 +43,6 @@ export default function CustomCursor() {
     if (isTouchDevice) return;
 
     const moveCursor = (e) => {
-      // Calcular velocidad del cursor
-      const deltaX = e.clientX - lastX.current;
-      const deltaY = e.clientY - lastY.current;
-      const speed = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      
-      lastX.current = e.clientX;
-      lastY.current = e.clientY;
-      
-      setVelocity(speed);
-
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
     };
@@ -81,7 +66,6 @@ export default function CustomCursor() {
     window.addEventListener('mouseup', handleMouseUp);
     handleHoverElements();
 
-    // Observer para nuevos elementos dinámicos
     const observer = new MutationObserver(handleHoverElements);
     observer.observe(document.body, { childList: true, subtree: true });
 
@@ -96,113 +80,58 @@ export default function CustomCursor() {
   if (!isMounted || isTouchDevice) return null;
 
   return (
-    <>
-      {/* Punto central (cursor real) - Transición suave */}
+    <motion.div
+      className="fixed top-0 left-0 pointer-events-none z-[9999]"
+      style={{
+        x: smoothX,
+        y: smoothY,
+        // No centramos (-50%) para que la punta de la flecha sea el punto de click exacto
+      }}
+    >
       <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9999] mix-blend-difference"
-        style={{
-          x: cursorX,
-          y: cursorY,
-          translateX: '-50%',
-          translateY: '-50%',
+        animate={{
+          scale: isClicking ? 0.9 : isHovering ? 1.1 : 1,
+          rotate: isClicking ? -10 : 0, // Pequeña rotación al hacer click (feedback)
         }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className="relative"
       >
-        <motion.div
-          className="w-2 h-2 rounded-full"
-          style={{
-            backgroundColor: 'var(--color-accent)',
-          }}
-          animate={{
-            scale: isClicking ? 0.5 : isHovering ? 1.5 : 1,
-          }}
-          transition={{
-            type: 'spring',
-            stiffness: 300,
-            damping: 25,
-            mass: 0.5,
-          }}
-        />
-      </motion.div>
-
-      {/* Círculo exterior - TRANSICIÓN SUAVE Y PROGRESIVA */}
-      <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-[9998] mix-blend-difference"
-        style={{
-          x: smoothX,
-          y: smoothY,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-      >
-        <motion.div
-          className="rounded-full border-2"
-          style={{
-            borderColor: 'var(--color-accent)',
-          }}
-          animate={{
-            width: isHovering ? '60px' : '40px',
-            height: isHovering ? '60px' : '40px',
-            scale: isClicking ? 0.8 : 1,
-            rotate: velocity > 5 ? velocity * 2 : 0,
-            borderWidth: velocity > 10 ? '3px' : '2px',
-          }}
-          transition={{
-            width: {
-              type: 'spring',
-              stiffness: 150,
-              damping: 20,
-              mass: 0.8,
-            },
-            height: {
-              type: 'spring',
-              stiffness: 150,
-              damping: 20,
-              mass: 0.8,
-            },
-            scale: {
-              type: 'spring',
-              stiffness: 200,
-              damping: 15,
-            },
-            rotate: {
-              type: 'spring',
-              stiffness: 100,
-              damping: 10,
-            },
-            borderWidth: {
-              duration: 0.2,
-            },
-          }}
-        />
-      </motion.div>
-
-      {/* Estela de velocidad (trail effect) - Transición suave */}
-      {velocity > 15 && (
-        <motion.div
-          className="fixed top-0 left-0 pointer-events-none z-[9997] mix-blend-difference"
-          style={{
-            x: smoothX,
-            y: smoothY,
-            translateX: '-50%',
-            translateY: '-50%',
-          }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 0.4, scale: 1.5 }}
-          exit={{ opacity: 0, scale: 2 }}
-          transition={{ 
-            duration: 0.5,
-            ease: "easeOut"
-          }}
+        {/* ESTÉTICA LIQUID GLASS / CRISTAL LÍQUIDO 
+          SVG de flecha personalizada.
+        */}
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          // Sombra para dar profundidad 3D y separarlo del fondo
+          className="drop-shadow-xl"
+          style={{ filter: 'drop-shadow(0px 4px 6px rgba(0,0,0,0.3))' }}
         >
-          <div
-            className="w-24 h-24 rounded-full border"
-            style={{
-              borderColor: 'var(--color-accent)',
-              opacity: 0.3,
-            }}
+          <path
+            d="M3.5 3.5L10.5 20.5L13.5 13.5L20.5 10.5L3.5 3.5Z"
+            // Relleno: Tu color verde accent (#b7ff00) pero semitransparente
+            fill="rgba(183, 255, 0, 0.35)" 
+            stroke="rgba(255, 255, 255, 0.8)" // Borde blanco casi opaco para efecto cristal
+            strokeWidth="1.5"
+            strokeLinejoin="round"
           />
-        </motion.div>
-      )}
-    </>
+          {/* Brillo interno (simulación de reflejo de cristal) */}
+          <path
+            d="M5 6L9 16L11 11L16 9L5 6Z"
+            fill="rgba(255, 255, 255, 0.1)"
+          />
+        </svg>
+
+        {/* Efecto de desenfoque (Backdrop Blur) dentro de la flecha 
+            Nota: backdrop-filter en SVG es complejo, usamos un div detrás con la misma forma 
+            o confiamos en la transparencia del SVG para simularlo. 
+            Para un efecto de cristal real en CSS dentro de una forma SVG compleja, 
+            la transparencia + borde blanco + sombra suele ser más performante y visualmente similar.
+        */}
+        
+      </motion.div>
+    </motion.div>
   );
 }
