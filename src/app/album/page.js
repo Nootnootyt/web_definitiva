@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react'; // ⭐ AÑADIDO useCallback, useMemo
 import { motion, useReducedMotion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import {
@@ -11,11 +11,27 @@ import {
   FaImages,
 } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
-import PhotoModal from '@/components/PhotoModal';
-import EditPhotoModal from '@/components/EditPhotoModal';
+import dynamic from 'next/dynamic'; // ⭐ AÑADIDO para lazy loading
+import Image from 'next/image'; // ✅ IMPORTAR
+
+// ⭐ OPTIMIZACIÓN 1: Lazy load de modales (solo cargan cuando se usan)
+const PhotoModal = dynamic(() => import('@/components/PhotoModal'), {
+  loading: () => null,
+  ssr: false,
+});
+
+const EditPhotoModal = dynamic(() => import('@/components/EditPhotoModal'), {
+  loading: () => null,
+  ssr: false,
+});
+
+const AdminPanel = dynamic(() => import('@/components/AdminPanel'), {
+  loading: () => null,
+  ssr: false,
+});
+
 import CustomCursor from '@/components/CustomCursor';
-import AdminPanel from '@/components/AdminPanel';
-import Header from '@/components/Header'; // ✅ IMPORTADO
+import Header from '@/components/Header';
 
 export default function AlbumPage() {
   const [ref, inView] = useInView({
@@ -31,6 +47,16 @@ export default function AlbumPage() {
   const [albumPhotos, setAlbumPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  
+  // ⭐ OPTIMIZACIÓN 2: Paginación para evitar cargar todas las fotos
+  const [page, setPage] = useState(1);
+  const PHOTOS_PER_PAGE = 20;
+
+  // ⭐ OPTIMIZACIÓN 3: Memoizar checkUser
+  const checkUser = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  }, []);
 
   useEffect(() => {
     checkUser();
@@ -42,38 +68,17 @@ export default function AlbumPage() {
     return () => {
       authListener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [checkUser]);
 
-  const checkUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setUser(user);
-  };
-
-  useEffect(() => {
-    loadPhotos();
-    const subscription = supabase
-      .channel('photos_changes_album')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'photos' },
-        () => {
-          loadPhotos();
-        }
-      )
-      .subscribe();
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const loadPhotos = async () => {
+  // ⭐ OPTIMIZACIÓN 4: Memoizar loadPhotos
+  const loadPhotos = useCallback(async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('photos')
         .select('*')
         .order('created_at', { ascending: false });
+      
       if (error) throw error;
       setAlbumPhotos(data || []);
     } catch (error) {
@@ -81,79 +86,113 @@ export default function AlbumPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const deletePhoto = async (photoId) => {
+  useEffect(() => {
+    loadPhotos();
+    
+    // ⭐ OPTIMIZACIÓN 5: Suscripción en tiempo real optimizada
+    const subscription = supabase
+      .channel('photos_changes_album')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'photos' 
+      }, () => {
+        loadPhotos();
+      })
+      .subscribe();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadPhotos]);
+
+  // ⭐ OPTIMIZACIÓN 6: Memoizar deletePhoto
+  const deletePhoto = useCallback(async (photoId) => {
     if (!user) {
       alert('Debes iniciar sesión para eliminar fotos');
       return;
     }
-    if (
-      !confirm(
-        '¿Estás seguro de que quieres eliminar esta foto del álbum? Se borrará permanentemente.'
-      )
-    )
+    
+    if (!confirm('¿Estás seguro de que quieres eliminar esta foto del álbum? Se borrará permanentemente.')) {
       return;
+    }
+    
     try {
       const { error } = await supabase
         .from('photos')
         .delete()
         .eq('id', photoId);
+      
       if (error) throw error;
-      setAlbumPhotos(albumPhotos.filter((photo) => photo.id !== photoId));
+      
+      // ⭐ Actualización optimista del estado
+      setAlbumPhotos(prev => prev.filter(photo => photo.id !== photoId));
     } catch (error) {
       console.error('Error eliminando foto:', error);
       alert('Error al eliminar la foto.');
+      loadPhotos(); // Recargar si hubo error
     }
-  };
+  }, [user, loadPhotos]);
 
-  const openModal = (photo) => {
+  // ⭐ OPTIMIZACIÓN 7: Memoizar funciones de modal
+  const openModal = useCallback((photo) => {
     setSelectedPhoto(photo);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openEditModal = (photo) => {
+  const openEditModal = useCallback((photo) => {
     setSelectedPhoto(photo);
     setIsEditModalOpen(true);
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setIsEditModalOpen(false);
     setTimeout(() => setSelectedPhoto(null), 300);
-  };
+  }, []);
 
-  const containerVariants = prefersReducedMotion
-    ? {}
-    : {
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            staggerChildren: 0.05,
-          },
-        },
-      };
+  // ⭐ OPTIMIZACIÓN 8: Memoizar variantes de animación
+  const containerVariants = useMemo(() => 
+    prefersReducedMotion ? {} : {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.03, // ⭐ Reducido de 0.05 a 0.03
+        }
+      }
+    }, [prefersReducedMotion]
+  );
 
-  const itemVariants = prefersReducedMotion
-    ? {}
-    : {
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: 0.3,
-            ease: 'easeOut',
-          },
-        },
-      };
+  const itemVariants = useMemo(() =>
+    prefersReducedMotion ? {} : {
+      hidden: { opacity: 0, y: 15 }, // ⭐ Reducido de 20 a 15
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: {
+          duration: 0.25, // ⭐ Reducido de 0.3 a 0.25
+          ease: 'easeOut'
+        }
+      }
+    }, [prefersReducedMotion]
+  );
+
+  // ⭐ OPTIMIZACIÓN 9: Mostrar solo las fotos de la página actual
+  const visiblePhotos = useMemo(() => 
+    albumPhotos.slice(0, page * PHOTOS_PER_PAGE),
+    [albumPhotos, page]
+  );
+
+  const hasMorePhotos = albumPhotos.length > visiblePhotos.length;
 
   if (loading) {
     return (
       <>
         <CustomCursor />
-        <Header /> {/* ✅ HEADER GLOBAL */}
+        <Header />
         <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
           <div className="text-center">
             <FaSpinner className="animate-spin text-[var(--color-accent)] text-6xl mx-auto mb-4" />
@@ -167,7 +206,8 @@ export default function AlbumPage() {
   return (
     <>
       <CustomCursor />
-      <Header /> {/* ✅ HEADER GLOBAL */}
+      <Header />
+      
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white relative overflow-hidden">
         {/* Elementos decorativos */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -177,7 +217,7 @@ export default function AlbumPage() {
           <div className="absolute bottom-40 left-10 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-10 hidden md:block" />
         </div>
 
-        {/* ✅ TÍTULO DE LA PÁGINA (reemplaza el header antiguo) */}
+        {/* Título de la página */}
         <div className="pt-24 md:pt-32 pb-8 px-4 md:px-6 relative z-10">
           <div className="container mx-auto">
             <div className="flex items-center gap-3 md:gap-4 mb-4">
@@ -244,90 +284,126 @@ export default function AlbumPage() {
                 </p>
               </div>
             ) : (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate={inView ? 'visible' : 'hidden'}
-                className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6"
-              >
-                {albumPhotos.map((photo) => (
-                  <motion.div
-                    key={photo.id}
-                    variants={itemVariants}
-                    className="relative group overflow-hidden rounded-lg md:rounded-xl aspect-square bg-gray-900 border border-gray-800 hover:border-[var(--color-accent)] transition-all"
-                  >
-                    {/* Badge */}
-                    {photo.in_portfolio && (
-                      <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-[var(--color-accent)] text-black rounded-full text-xs font-bold flex items-center gap-1">
-                        <FaStar size={8} />
-                        <span className="hidden sm:inline">Destacada</span>
-                      </div>
-                    )}
-
-                    {/* Botones admin */}
-                    {user && (
-                      <div className="absolute top-2 right-2 z-10 flex gap-1 md:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditModal(photo);
-                          }}
-                          className="cursor-pointer w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors"
-                        >
-                          <FaEdit size={12} className="md:text-sm" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deletePhoto(photo.id);
-                          }}
-                          className="cursor-pointer w-8 h-8 md:w-9 md:h-9 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors"
-                        >
-                          <FaTrash size={12} className="md:text-sm" />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Imagen */}
-                    <div
-                      onClick={() => openModal(photo)}
-                      className="cursor-pointer w-full h-full relative"
+              <>
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate={inView ? "visible" : "hidden"}
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6"
+                >
+                  {visiblePhotos.map((photo) => (
+                    <motion.div
+                      key={photo.id}
+                      variants={itemVariants}
+                      className="relative group overflow-hidden rounded-lg md:rounded-xl aspect-square bg-gray-900 border border-gray-800 hover:border-[var(--color-accent)] transition-all"
                     >
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-300 md:group-hover:scale-110"
-                        style={{ backgroundImage: `url(${photo.image})` }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 md:group-hover:opacity-80 transition-opacity" />
+                      {/* Badge */}
+                      {photo.in_portfolio && (
+                        <div className="absolute top-2 left-2 z-10 px-2 py-1 bg-[var(--color-accent)] text-black rounded-full text-xs font-bold flex items-center gap-1">
+                          <FaStar size={8} />
+                          <span className="hidden sm:inline">Destacada</span>
+                        </div>
+                      )}
 
-                      <div className="absolute inset-0 flex flex-col justify-end p-2 md:p-4">
-                        <div className="transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform md:opacity-0 md:group-hover:opacity-100">
-                          <span className="text-xs text-[var(--color-accent)] font-semibold mb-1 block uppercase tracking-wider line-clamp-1">
-                            {photo.category}
-                          </span>
-                          <h3 className="text-sm md:text-lg font-bold text-white line-clamp-2">
-                            {photo.title}
-                          </h3>
+                      {/* Botones admin */}
+                      {user && (
+                        <div className="absolute top-2 right-2 z-10 flex gap-1 md:gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(photo);
+                            }}
+                            className="cursor-pointer w-8 h-8 md:w-9 md:h-9 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition-colors shadow-lg"
+                            aria-label="Editar foto"
+                          >
+                            <FaEdit size={12} className="md:text-sm" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deletePhoto(photo.id);
+                            }}
+                            className="cursor-pointer w-8 h-8 md:w-9 md:h-9 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-lg"
+                            aria-label="Eliminar foto"
+                          >
+                            <FaTrash size={12} className="md:text-sm" />
+                          </button>
+                        </div>
+                      )}
+
+                      
+                      {/* ✅ IMAGEN OPTIMIZADA */}
+                      <div
+                        onClick={() => openModal(photo)}
+                        className="cursor-pointer w-full h-full relative"
+                      >
+                        <Image
+                          src={photo.image}
+                          alt={photo.title}
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          className="object-cover transition-transform duration-300 md:group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 md:group-hover:opacity-80 transition-opacity" />
+                        
+                        <div className="absolute inset-0 flex flex-col justify-end p-2 md:p-4">
+                          <div className="transform md:translate-y-4 md:group-hover:translate-y-0 transition-transform md:opacity-0 md:group-hover:opacity-100">
+                            <span className="text-xs text-[var(--color-accent)] font-semibold mb-1 block uppercase tracking-wider line-clamp-1">
+                              {photo.category}
+                            </span>
+                            <h3 className="text-sm md:text-lg font-bold text-white line-clamp-2">
+                              {photo.title}
+                            </h3>
+                          </div>
                         </div>
                       </div>
-                    </div>
+
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* ⭐ OPTIMIZACIÓN 11: Botón "Cargar más" */}
+                {hasMorePhotos && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-center mt-12"
+                  >
+                    <button
+                      onClick={() => setPage(p => p + 1)}
+                      className="px-8 py-4 bg-[var(--color-accent)] text-black font-bold rounded-full hover:bg-white hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-[var(--color-accent)]/50 flex items-center gap-3"
+                    >
+                      <span>Cargar más fotos</span>
+                      <span className="text-sm opacity-75">
+                        ({albumPhotos.length - visiblePhotos.length} restantes)
+                      </span>
+                    </button>
                   </motion.div>
-                ))}
-              </motion.div>
+                )}
+              </>
             )}
           </div>
         </section>
       </div>
-      <PhotoModal
-        photo={selectedPhoto}
-        isOpen={isModalOpen}
-        onClose={closeModal}
-      />
-      <EditPhotoModal
-        photo={selectedPhoto}
-        isOpen={isEditModalOpen}
-        onClose={closeModal}
-        onUpdate={loadPhotos}
-      />
+
+      {/* Modales con lazy loading */}
+      {isModalOpen && (
+        <PhotoModal 
+          photo={selectedPhoto} 
+          isOpen={isModalOpen} 
+          onClose={closeModal} 
+        />
+      )}
+
+      {isEditModalOpen && (
+        <EditPhotoModal
+          photo={selectedPhoto}
+          isOpen={isEditModalOpen}
+          onClose={closeModal}
+          onUpdate={loadPhotos}
+        />
+      )}
+
       <AdminPanel />
     </>
   );

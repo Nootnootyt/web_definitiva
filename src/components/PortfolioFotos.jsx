@@ -1,74 +1,91 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import { FaImages, FaEdit, FaTimes } from 'react-icons/fa';
+import { supabase } from '@/lib/supabase';
 import PhotoModal from './PhotoModal';
 import EditPhotoModal from './EditPhotoModal';
-import { FaEdit, FaTimes, FaImages } from 'react-icons/fa';
-import { supabase } from '@/lib/supabase';
-import Link from 'next/link';
+import Image from 'next/image'; // ✅ IMPORTAR
 
 export default function PortfolioFotos() {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  });
-
+  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [portfolioPhotos, setPortfolioPhotos] = useState([]);
   const [user, setUser] = useState(null);
 
+  // Verificar sesión
   useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
     checkUser();
+
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
     });
+
     return () => {
       authListener?.subscription?.unsubscribe();
     };
   }, []);
 
-  const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    setUser(user);
-  };
-
-  useEffect(() => {
-    loadPortfolioPhotos();
-  }, []);
-
-  const loadPortfolioPhotos = async () => {
+  const loadPortfolioPhotos = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('photos')
         .select('*')
         .eq('in_portfolio', true)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
-      console.log('📸 Portfolio photos:', data?.length || 0);
       setPortfolioPhotos(data || []);
     } catch (error) {
-      console.error('❌ Error:', error);
+      console.error('Error cargando fotos del portfolio:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadPortfolioPhotos();
+
+    const subscription = supabase
+      .channel('photos_changes_portfolio')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'photos'
+      }, () => {
+        loadPortfolioPhotos();
+      })
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [loadPortfolioPhotos]);
 
   const removeFromPortfolio = async (photoId) => {
-    if (!user) return alert('Debes iniciar sesión');
-    if (!confirm('¿Quitar del portfolio?')) return;
-    
+    if (!user) {
+      alert('Debes iniciar sesión');
+      return;
+    }
+
+    if (!confirm('¿Quitar esta foto del portfolio destacado?')) {
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('photos')
         .update({ in_portfolio: false })
         .eq('id', photoId);
-      
+
       if (error) throw error;
-      setPortfolioPhotos(portfolioPhotos.filter(photo => photo.id !== photoId));
+      loadPortfolioPhotos();
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error quitando del portfolio:', error);
+      alert('Error al quitar del portfolio.');
     }
   };
 
@@ -90,32 +107,24 @@ export default function PortfolioFotos() {
 
   return (
     <>
-      <section id="destacado" className="py-20 md:py-32 px-4 md:px-6 bg-black" ref={ref}>
-        <div className="container mx-auto">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8 }}
-            className="mb-12 md:mb-16"
-          >
-            <div className="mb-6 md:mb-8">
-              <h2 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black mb-3 md:mb-4 leading-tight">
-                <span className="text-white">FOTOS</span>{' '}
-                <span style={{ color: 'var(--color-accent)' }}>DESTACADAS</span>
-              </h2>
-              <p className="text-gray-400 text-base md:text-xl max-w-2xl">
-                Una selección de mis mejores trabajos fotográficos
-              </p>
+      <section id="destacado" className="py-16 md:py-24 px-4 md:px-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(183,255,0,.03)_1px,transparent_1px),linear-gradient(90deg,rgba(183,255,0,.03)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000,transparent)] pointer-events-none" />
+        
+        <div className="container mx-auto relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 md:mb-12">
+            <div className="flex items-center gap-3 mb-4 md:mb-0">
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[var(--color-accent)]/20 flex items-center justify-center">
+                <FaImages className="text-2xl md:text-3xl text-[var(--color-accent)]" />
+              </div>
+              <div>
+                <h2 className="text-3xl md:text-5xl font-black">
+                  <span className="text-white">FOTOS</span>{' '}
+                  <span style={{ color: 'var(--color-accent)' }}>DESTACADAS</span>
+                </h2>
+                <p className="text-sm md:text-base text-gray-400 mt-1">Mi mejor trabajo fotográfico</p>
+              </div>
             </div>
-
-            <Link href="/album">
-              <button className="cursor-pointer w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-[var(--color-accent)] hover:bg-white text-black font-bold text-base md:text-lg transition-all duration-300 hover:scale-105 shadow-xl">
-                <FaImages className="text-xl" />
-                <span>Ver Álbum Completo</span>
-                <span className="hidden sm:inline">→</span>
-              </button>
-            </Link>
-          </motion.div>
+          </div>
 
           {portfolioPhotos.length === 0 ? (
             <div className="text-center py-20">
@@ -155,12 +164,14 @@ export default function PortfolioFotos() {
                     </div>
                   )}
 
-                  {/* IMAGEN DIRECTA SIN ANIMACIONES */}
-                  <img
+                  {/* ✅ IMAGEN OPTIMIZADA CON NEXT.JS IMAGE */}
+                  <Image
                     src={photo.image}
                     alt={photo.title || 'Destacado'}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    priority={index < 3} // ✅ Priorizar las primeras 3 imágenes
                   />
 
                   {/* Overlay */}

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FaTimes, FaLock, FaEnvelope, FaSpinner } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
@@ -9,6 +9,21 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // 🚀 OPTIMIZACIÓN: Bloquear scroll con clase
+  useEffect(() => {
+    if (isOpen) {
+      const scrollY = window.scrollY;
+      document.body.classList.add('modal-open');
+      document.body.style.top = `-${scrollY}px`;
+      
+      return () => {
+        document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [isOpen]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,7 +39,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       if (error) throw error;
 
       console.log('Login exitoso:', data);
-      onLoginSuccess(data.user);
+      onLoginSuccess?.(data.user);
       onClose();
     } catch (error) {
       console.error('Error de login:', error);
@@ -41,15 +56,29 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      transition={{ duration: 0.2 }} // 🚀 Más rápido
+      className="modal modal-active fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={onClose}
+      style={{ 
+        willChange: 'opacity',
+        overscrollBehavior: 'contain'
+      }}
     >
       <motion.div
-        initial={{ scale: 0.9, y: 50 }}
+        initial={{ scale: 0.9, y: 20 }} // 🚀 Movimiento más sutil
         animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 50 }}
+        exit={{ scale: 0.9, y: 20 }}
+        transition={{ 
+          type: "spring",
+          stiffness: 300,
+          damping: 25
+        }}
         className="bg-gray-900 rounded-3xl p-8 max-w-md w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        style={{ 
+          willChange: 'transform, opacity',
+          contain: 'layout style paint'
+        }}
       >
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
@@ -63,6 +92,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           <button
             onClick={onClose}
             className="cursor-pointer w-10 h-10 rounded-full bg-gray-800 hover:bg-red-500 text-white transition-colors flex items-center justify-center"
+            style={{ willChange: 'background-color' }}
           >
             <FaTimes />
           </button>
@@ -88,7 +118,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 required
                 disabled={loading}
                 placeholder="tu-email@gmail.com"
-                className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
+                className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50 transition-all"
               />
             </div>
           </div>
@@ -106,7 +136,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                 required
                 disabled={loading}
                 placeholder="••••••••"
-                className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
+                className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50 transition-all"
               />
             </div>
           </div>
@@ -114,22 +144,19 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           <button
             type="submit"
             disabled={loading}
-            className="cursor-pointer w-full px-8 py-4 bg-[var(--color-accent)] text-black font-bold text-lg rounded-full hover:shadow-2xl hover:shadow-[var(--color-accent)]/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="cursor-pointer w-full py-3 bg-[var(--color-accent)] text-black font-bold rounded-lg hover:bg-white transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ willChange: 'transform' }}
           >
             {loading ? (
               <>
                 <FaSpinner className="animate-spin" />
-                Iniciando sesión...
+                <span>Iniciando sesión...</span>
               </>
             ) : (
               'Iniciar Sesión'
             )}
           </button>
         </form>
-
-        <p className="text-gray-500 text-sm text-center mt-6">
-          Solo el administrador puede acceder
-        </p>
       </motion.div>
     </motion.div>
   );

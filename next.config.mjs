@@ -1,12 +1,31 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Export estático (GitHub Pages / hosting estático)
   output: 'export',
+  
   images: {
     unoptimized: true,
+    
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
-  // Añade estas líneas (reemplaza 'nombre-repositorio' con el nombre real de tu repo)
-  basePath: '/web_definitiva',
-  assetPrefix: '/web_definitiva/',
-}
 
-export default nextConfig
+  // Base path SOLO para producción (GitHub Pages)
+  basePath: process.env.NODE_ENV === 'production' ? '/web_definitiva' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/web_definitiva/' : '',
+
+  compress: true,
+  reactStrictMode: true,
+
+  turbopack: {},
+};
+
+export default nextConfig;

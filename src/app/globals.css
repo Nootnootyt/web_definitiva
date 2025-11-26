@@ -1,204 +1,293 @@
+/* ========= globals.css (optimizado para máxima fluidez) =========
+   Optimizaciones clave:
+   - GPU acceleration con transform: translate3d(0,0,0)
+   - will-change estratégico para modales y animaciones
+   - contain CSS para aislar re-renders
+   - Smooth scrolling optimizado
+   ============================================ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-accent: #BFFF00; /* Verde lima vibrante inspirado en Lando */
-  --color-bg: #0a0a0a;
-  --color-text: #ffffff;
+/* Ocultar cursor nativo en dispositivos no táctiles */
+@media (pointer: fine) {
+  body, a, button, input, select, textarea, .cursor-pointer {
+    cursor: none !important;
+  }
 }
 
-* {
-  margin: 0;
-  padding: 0;
+/* Variables globales (tema) */
+:root{
+  --color-bg: #000000;
+  --color-bg-2: #08080b;
+  --color-foreground: #e6eef2;
+  --color-muted: #9aa3a8;
+  --color-accent: #b7ff00;
+  --color-accent-600: #9dd200;
+  --container-max-width: 1200px;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Courier New", monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root{
+    --color-bg: #ffffff;
+    --color-bg-2: #f7f7f8;
+    --color-foreground: #071018;
+    --color-muted: #6b7280;
+  }
+}
+
+/* Base reset accesible */
+*,
+*::before,
+*::after{
   box-sizing: border-box;
 }
 
-body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  overflow-x: hidden;
-  cursor: none;
+/* 🚀 OPTIMIZACIÓN GPU: Forzar aceleración de hardware en elementos animados */
+.gpu-accelerated,
+[data-animate],
+.modal,
+.admin-panel-modal,
+.photo-modal {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
-html {
+img,
+video,
+canvas,
+iframe,
+embed,
+object{
+  display: block;
+  max-width: 100%;
+  height: auto;
+  line-height: 0;
+  border-style: none;
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 120px;
+  -webkit-user-drag: none;
+}
+
+html, body {
+  height: 100%;
+  background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-bg-2) 100%);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  /* 🚀 Smooth scrolling optimizado */
   scroll-behavior: smooth;
 }
 
-/* Ocultar cursor por defecto */
-* {
-  cursor: none !important;
+/* 🚀 CRÍTICO: Prevenir scroll en body cuando hay modales */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
 }
 
-/* Scrollbar personalizado */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-accent);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #a0df00;
-}
-
-/* ===== CURSOR PERSONALIZADO ===== */
-
-/* Ocultar cursor por defecto en toda la página */
-* {
-  cursor: none !important;
-}
-
-/* Mostrar cursor normal solo en inputs/textareas cuando están en foco */
-input:focus,
-textarea:focus,
-select:focus {
-  cursor: text !important;
-}
-
-/* Elementos interactivos mantienen cursor: none pero con clase especial */
-button,
-a,
-[role="button"],
-.cursor-pointer {
-  cursor: none !important;
-}
-
-/* Asegurar que los modales no oculten el cursor personalizado */
-.photo-modal,
-.admin-panel-modal,
-.cursor-dot,
-.cursor-outline {
-  pointer-events: none;
-}
-
-/* Permitir interacción en contenido de modales */
-.photo-modal > div,
-.admin-panel-modal > div,
-button,
-input,
-textarea,
-select,
 a {
-  pointer-events: auto;
+  color: inherit;
+  text-decoration: none;
 }
 
-/* ===== FIX PARA CURSOR PERSONALIZADO ===== */
-
-/* Evitar que el texto interfiera con el cursor */
-h1, h2, h3, h4, h5, h6, p, span, div, section, article {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
+button {
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Permitir selección solo en contenido editable */
-input,
-textarea,
-[contenteditable="true"] {
-  user-select: text;
-  -webkit-user-select: text;
+/* Focus & Accessibility */
+:focus {
+  outline: none;
 }
 
-/* Asegurar que los elementos de texto no interfieran con el cursor */
-* {
-  cursor: none !important;
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 65%, transparent);
+  outline-offset: 3px;
+  border-radius: 6px;
+  box-shadow: 0 4px 24px rgba(183,255,0,0.08);
 }
 
-/* Elementos interactivos deben ser detectables pero sin cursor nativo */
-a, button, input, textarea, select, [role="button"] {
-  cursor: none !important;
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
-/* Mejorar rendimiento del cursor personalizado */
-.cursor-dot,
-.cursor-outline {
-  pointer-events: none;
+/* "Glass" panels - OPTIMIZADO */
+.glass {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+  /* 🚀 Aislar re-paints */
+  contain: layout style paint;
+  transform: translate3d(0, 0, 0);
+}
+
+.glass-accent {
+  background: linear-gradient(180deg, rgba(183,255,0,0.03), rgba(183,255,0,0.01));
+  border-color: rgba(183,255,0,0.08);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: black;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 0.75rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform 160ms ease, box-shadow 180ms ease;
+  /* 🚀 GPU acceleration */
   will-change: transform;
   transform: translate3d(0, 0, 0);
 }
 
-/* ===== OPTIMIZACIÓN DE ANIMACIONES PARA MÓVILES ===== */
-
-/* Forzar aceleración por hardware en elementos animados */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.btn-primary:hover {
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 12px 30px rgba(183,255,0,0.12);
 }
 
-/* Optimizar todos los elementos con transiciones */
-[class*="transition"],
-[class*="duration"],
-[class*="hover:scale"],
-[class*="group-hover"] {
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.035), rgba(255,255,255,0.02));
+  border-radius: 8px;
+  min-height: 80px;
+  animation: skeleton-shimmer 1.4s linear infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.container {
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* 🚀 OPTIMIZACIÓN: will-change solo para modales activos */
+.modal-active {
   will-change: transform, opacity;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
-/* Optimizar imágenes para animaciones suaves */
-img {
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-/* Animaciones de scroll suaves */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Optimizar elementos con hover */
-.group:hover img {
-  transform: translateZ(0) scale(1.1);
-}
-
-/* Reducir complejidad de blur en móviles */
+/* Reducir efectos pesados en móvil */
 @media (max-width: 768px) {
-  .glass,
-  .glass-strong,
-  .glass-dark,
-  .glass-accent {
-    backdrop-filter: blur(10px) saturate(150%);
-    -webkit-backdrop-filter: blur(10px) saturate(150%);
-  }
-  
-  /* Reducir sombras pesadas en móvil */
-  [class*="shadow-2xl"],
-  [class*="shadow-xl"] {
-    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.3);
+  .btn-primary { box-shadow: none; }
+  .glass { 
+    backdrop-filter: blur(4px); 
+    -webkit-backdrop-filter: blur(4px);
   }
 }
 
-/* Optimizar Framer Motion */
-[data-projection-id] {
+/* Respetar preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (pointer: coarse) and (max-width: 900px) {
+  .no-3d { transform: none !important; }
+}
+
+/* 🚀 CRÍTICO: Optimizar modales para máximo rendimiento */
+.admin-panel-modal, .modal, .photo-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Aislar completamente el modal del resto de la página */
+  contain: layout style paint;
+  /* Forzar nueva capa de composición */
+  will-change: opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  /* Prevenir scroll subyacente */
+  overscroll-behavior: contain;
+}
+
+/* Contenido interno del modal */
+.modal > div,
+.admin-panel-modal > div,
+.photo-modal > div {
   will-change: transform, opacity;
-  transform: translateZ(0);
+  transform: translate3d(0, 0, 0);
+  contain: layout style paint;
 }
 
-/* Ocultar cursor del sistema */
-body {
-  cursor: none;
-}
-
-/* Pero mostrar el cursor normal en inputs */
+/* Forms & Inputs */
 input, textarea, select {
-  cursor: text !important;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--color-foreground);
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  transition: border-color 150ms ease, box-shadow 160ms ease;
 }
 
-/* En dispositivos táctiles, mantener cursor normal */
-@media (hover: none) and (pointer: coarse) {
-  body {
-    cursor: auto;
-  }
+input:focus, textarea:focus, select:focus {
+  border-color: color-mix(in srgb, var(--color-accent) 60%, transparent);
+  box-shadow: 0 8px 24px rgba(183,255,0,0.06);
+  outline: none;
+}
+
+textarea { 
+  min-height: 80px; 
+  resize: vertical; 
+}
+
+[role="button"], button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline-color: var(--color-accent);
+}
+
+img, svg, video {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.bg-pattern {
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  background-size: cover;
+}
+
+/* 🚀 NUEVO: Optimizar animaciones de Framer Motion */
+[data-framer-motion] {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+/* 🚀 NUEVO: Tabs optimizados */
+[role="tab"],
+[role="tabpanel"] {
+  contain: layout style;
+  transform: translate3d(0, 0, 0);
 }

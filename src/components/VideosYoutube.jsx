@@ -64,13 +64,16 @@ export default function VideosYoutube() {
                   <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-accent)] to-purple-600 rounded-2xl opacity-0 group-hover:opacity-75 blur-lg transition-opacity duration-500" />
                   
                   <div className="relative bg-black rounded-2xl overflow-hidden border-2 border-gray-800 hover:border-[var(--color-accent)] transition-colors">
-                    <div className="aspect-video relative">
+                    <div className="aspect-video relative video-container">
+                      {/* ✅ Capa protectora para el cursor - Solo visible en hover */}
+                      <div className="absolute inset-0 z-10 pointer-events-none group-hover:pointer-events-auto cursor-pointer" />
+                      
                       <iframe
                         src={`https://www.youtube.com/embed/${video.embedId}`}
                         title={video.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
-                        className="w-full h-full"
+                        className="w-full h-full relative z-0"
                       />
                     </div>
                     
@@ -107,13 +110,16 @@ export default function VideosYoutube() {
                   <div className="absolute -inset-1 bg-gradient-to-r from-[var(--color-accent)] to-purple-600 rounded-2xl opacity-0 group-hover:opacity-75 blur-lg transition-opacity duration-500" />
                   
                   <div className="relative bg-black rounded-2xl overflow-hidden border-2 border-gray-800 hover:border-[var(--color-accent)] transition-colors">
-                    <div className="aspect-video relative">
+                    <div className="aspect-video relative video-container">
+                      {/* ✅ Capa protectora para el cursor - Solo visible en hover */}
+                      <div className="absolute inset-0 z-10 pointer-events-none group-hover:pointer-events-auto cursor-pointer" />
+                      
                       <iframe
                         src={`https://www.youtube.com/embed/${videos[2].embedId}`}
                         title={videos[2].title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
-                        className="w-full h-full"
+                        className="w-full h-full relative z-0"
                       />
                     </div>
                     

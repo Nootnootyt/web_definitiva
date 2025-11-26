@@ -4,6 +4,7 @@ import { FaTimes, FaTrash, FaMinus, FaPlus, FaShoppingBag } from 'react-icons/fa
 import { useCartStore } from '@/lib/cartStore';
 import { useState } from 'react';
 import CheckoutModal from './CheckoutModal';
+import Image from 'next/image'; // ✅ IMPORTAR
 
 export default function CartSidebar() {
   const isOpen = useCartStore((state) => state.isOpen);
@@ -83,12 +84,14 @@ export default function CartSidebar() {
                         className="glass rounded-xl p-4 relative"
                       >
                         <div className="flex gap-4">
-                          {/* Imagen */}
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-900 flex-shrink-0">
-                            <img
+                          {/* ✅ IMAGEN OPTIMIZADA */}
+                          <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-900 flex-shrink-0">
+                            <Image
                               src={item.image}
                               alt={item.name}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="80px"
+                              className="object-cover"
                             />
                           </div>
 
